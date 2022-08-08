@@ -176,7 +176,7 @@ geo_heat_function2 <- function(matrix){
   return(geo)
 }
 
-gene_heat_function2 <- function(matrix,geo,anno1, anno2){
+gene_heat_function2 <- function(matrix,geo,anno1, anno2, size){
   gene_col <-  colorRamp2(c(0,0.5,1), c("#8DD3C7", "white", "#FB8072"))
   gene <- Heatmap(matrix, bottom_annotation = anno1, right_annotation = anno2,
                   col=gene_col,
@@ -190,7 +190,7 @@ gene_heat_function2 <- function(matrix,geo,anno1, anno2){
                   column_order=column_order(geo),
                   name="Pairwise Fst",
                   cell_fun = function(j, i, x, y, width, height, fill) {
-                    grid.text(sprintf("%.3f", matrix[i, j]), x, y, gp = gpar(fontsize = 4))})
+                    grid.text(sprintf("%.3f", matrix[i, j]), x, y, gp = gpar(fontsize = {{size}}))})
 }
 
 admix_plotter <- function(data, splitby, textsize, textangle){
