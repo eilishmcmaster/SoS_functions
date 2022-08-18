@@ -18,7 +18,7 @@ custom.read <- function(species, dataset){
   return(custom)
 }
 
-
+#test
 
 
 #used to remove samples with high missingness
@@ -162,11 +162,11 @@ gene_heat_function <- function(matrix, font){
 }
 
 
-geo_heat_function2 <- function(matrix){
+geo_heat_function2 <- function(matrix, axistext){
   palette <-  colorRamp2(c(0, max(matrix)), c("white", "#80B1D3"))
   geo <- Heatmap(matrix, col=palette,
-                 row_names_gp = gpar(fontsize = 8),
-                 column_names_gp = gpar(fontsize = 8),
+                 row_names_gp = gpar(fontsize = {{axistext}}),
+                 column_names_gp = gpar(fontsize = {{axistext}}),
                  row_names_max_width = unit(15, "cm"),
                  border_gp = gpar(col = "black", lty = 1),
                  name="Distance (km)",
@@ -176,12 +176,12 @@ geo_heat_function2 <- function(matrix){
   return(geo)
 }
 
-gene_heat_function2 <- function(matrix,geo,anno1, anno2, size){
+gene_heat_function2 <- function(matrix,geo,anno1, anno2, insidetext, axistext){
   gene_col <-  colorRamp2(c(0,0.5,1), c("#8DD3C7", "white", "#FB8072"))
   gene <- Heatmap(matrix, bottom_annotation = anno1, right_annotation = anno2,
                   col=gene_col,
-                  row_names_gp = gpar(fontsize = 8),
-                  column_names_gp = gpar(fontsize = 8),
+                  row_names_gp = gpar(fontsize = {{axistext}}),
+                  column_names_gp = gpar(fontsize = {{axistext}}),
                   row_names_max_width = unit(15, "cm"),
                   border_gp = gpar(col = "black", lty = 1), 
                   # cluster_columns = FALSE,
@@ -190,7 +190,7 @@ gene_heat_function2 <- function(matrix,geo,anno1, anno2, size){
                   column_order=column_order(geo),
                   name="Pairwise Fst",
                   cell_fun = function(j, i, x, y, width, height, fill) {
-                    grid.text(sprintf("%.3f", matrix[i, j]), x, y, gp = gpar(fontsize = {{size}}))})
+                    grid.text(sprintf("%.3f", matrix[i, j]), x, y, gp = gpar(fontsize = {{insidetext}}))})
 }
 
 admix_plotter <- function(data, splitby, textsize, textangle){
