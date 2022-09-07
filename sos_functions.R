@@ -736,3 +736,55 @@ bigger_optimisation <- function(N_t_vec, gt, max_wts){
   
   return(solutions2)
 }}
+
+#for the venn diagram alleles
+filter <- function(x, min){
+  a1_sum <- sum(x== 0 | x== 2, na.rm=TRUE)
+  a1_freq <- a1_sum/(length(x)*2)
+  a2_sum <- sum(x== 1 | x== 2, na.rm=TRUE)
+  a2_freq <- a2_sum/(length(x)*2)
+  
+  if(a1_freq<(1-min) & a1_freq >min &&
+     a2_freq<(1-min) & a2_freq >min
+  ){ #safe zone
+    return("keep")
+  }
+}
+
+
+
+matcher2 <- function(df2, loci){
+  df <- df2[-1]
+  out <- vector()
+  if(0 %in% df | 2 %in% df){
+    out <- append(out, loci[loci==df2[1],2])
+  }
+  if(1 %in% df | 2 %in% df){
+    out <- append(out,loci[loci==df2[1],3])
+  }
+  return(out)
+}
+
+
+venner <- function(dms, pops, min_af){
+  groups <- unique({{pops}})
+  out <- vector()
+  
+  ds <- dms$gt
+  ds <- ds[,which(apply(ds,2,filter, min_af)=="keep")] #remove the low frequency snp sites
+  cat("Found ", ncol(ds), " poly sites\n")     
+  loci <- data.frame("loci"=colnames(dms$gt),
+                     "allele1"=paste(dms$locus_names,substr(dms$locus_nuc, start=1, stop=1)),
+                     "allele2"=paste(dms$locus_names,substr(dms$locus_nuc, start=3, stop=3)))
+  for(i in 1:length(groups)){
+    df <- ds[{{pops}}==groups[i],] # gets the gt frame of just that group THIS IS A PROBLEM WHEN N=1
+    cat("There are ", nrow(df), " samples in ", groups[i], "\n")
+    df2 <- rbind("names"=colnames(df), df)
+    alleles <- apply(df2, 2, matcher2, loci)
+    names(alleles)<-NULL
+    listed <- unlist(alleles)
+    out <- c(out, list(listed))
+    names(out)[i] <- groups[i]
+  }
+  return(out)
+}
