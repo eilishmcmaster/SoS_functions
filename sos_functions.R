@@ -1,3 +1,8 @@
+classifier_function <- function(qdf, plateau){
+  qdf$dominant_pop <- colnames(qdf[,(2:(plateau+1))])[apply(qdf[,(2:(plateau+1))],1,which.max)]
+  qdf$dom_pop_proportion <- apply(qdf[,(2:(plateau+1))],1,max)
+  return(qdf)
+}
 
 metadata.read <- function(species){
   meta <- fread(paste(species, "/meta/",species,"_meta.csv", sep=""))
