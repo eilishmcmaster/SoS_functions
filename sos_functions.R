@@ -776,7 +776,7 @@ venner <- function(dms, pops, min_af){
   out <- vector()
   
   ds <- dms$gt
-  ds <- ds[,which(apply(ds,2,filter, min_af)=="keep")] #remove the low frequency snp sites
+  ds <- ds[,which(apply(ds,2,filter, min_af) %in% "keep")] #remove the low frequency snp sites
   cat("Found ", ncol(ds), " poly sites\n")     
   loci <- data.frame("loci"=colnames(dms$gt),
                      "allele1"=paste(dms$locus_names,substr(dms$locus_nuc, start=1, stop=1)),
