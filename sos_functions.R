@@ -782,7 +782,7 @@ venner <- function(dms, pops, min_af){
                      "allele1"=paste(dms$locus_names,substr(dms$locus_nuc, start=1, stop=1)),
                      "allele2"=paste(dms$locus_names,substr(dms$locus_nuc, start=3, stop=3)))
   for(i in 1:length(groups)){
-    df <- ds[{{pops}}==groups[i],] # gets the gt frame of just that group THIS IS A PROBLEM WHEN N=1
+    df <- ds[{{pops}} %in% groups[i],] # gets the gt frame of just that group
     cat("There are ", nrow(df), " samples in ", groups[i], "\n")
     df2 <- rbind("names"=colnames(df), df)
     alleles <- apply(df2, 2, matcher2, loci)
