@@ -744,18 +744,28 @@ bigger_optimisation <- function(N_t_vec, gt, max_wts){
 
 #for the venn diagram alleles
 filter <- function(x, min){
-  a1_sum <- sum(x== 0 | x== 2, na.rm=TRUE)
-  a1_freq <- a1_sum/(length(x)*2)
-  a2_sum <- sum(x== 1 | x== 2, na.rm=TRUE)
-  a2_freq <- a2_sum/(length(x)*2)
+  #File description: SNP 1 Row Mapping Format: "0" = Reference allele homozygote, "1" = SNP allele homozygote, "2"= heterozygote and "-" = double null/null allele homozygote (absence of fragment with SNP in genomic representation)
+  a1_homo <- sum(x== 0, na.rm=TRUE)*2 #allele count of homozygous a1
+  a1_hetero <- sum(x== 2, na.rm=TRUE) #allele count of hetero alleles (a1 or a2)
+  a1_all <- sum(a1_homo, a1_hetero)
+  a1_freq <- a1_all/(length(x)*2)
   
-  if(a1_freq<(1-min) & a1_freq >min &&
-     a2_freq<(1-min) & a2_freq >min
-  ){ #safe zone
+  a2_homo<- sum(x== 1, na.rm=TRUE)*2
+  a2_all <- sum(a2_homo, a1_hetero)
+  a2_freq <- a2_all/(length(x)*2)
+  
+  if(a1_freq<a2_freq){
+    maf <- a1_freq
+  }else{
+    maf<- a2_freq
+  }
+  # cat(maf, "\n")
+  if(maf>=min){
     return("keep")
+  }else{
+    return(NULL)
   }
 }
-
 
 
 matcher2 <- function(df2, loci){
