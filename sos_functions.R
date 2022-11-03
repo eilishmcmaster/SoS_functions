@@ -743,29 +743,137 @@ bigger_optimisation <- function(N_t_vec, gt, max_wts){
 }}
 
 #for the venn diagram alleles
-filter <- function(x, min){
-  #File description: SNP 1 Row Mapping Format: "0" = Reference allele homozygote, "1" = SNP allele homozygote, "2"= heterozygote and "-" = double null/null allele homozygote (absence of fragment with SNP in genomic representation)
-  a1_homo <- sum(x== 0, na.rm=TRUE)*2 #allele count of homozygous a1
-  a1_hetero <- sum(x== 2, na.rm=TRUE) #allele count of hetero alleles (a1 or a2)
-  a1_all <- sum(a1_homo, a1_hetero)
-  a1_freq <- a1_all/(length(x)*2)
-  
-  a2_homo<- sum(x== 1, na.rm=TRUE)*2
-  a2_all <- sum(a2_homo, a1_hetero)
-  a2_freq <- a2_all/(length(x)*2)
-  
-  if(a1_freq<a2_freq){
-    maf <- a1_freq
+filter <- function(x){ # find maf 
+  if (length(which(!is.na(x)))==0){ # if everything is NA, MAF= 0 
+    maf <- 0
   }else{
-    maf<- a2_freq
+    a2_freq <- sum(x, na.rm = TRUE)/(length(which(!is.na(x)))*2) # data is altcount where homo2=0 heter0=1, homo2=2, so allele2 count is sum
+    a1_freq <- 1-a2_freq #allele 1 frequency 
+    if(a1_freq<a2_freq){ #choose the smaller allele frequency
+      maf <- a1_freq
+    }else{
+      maf<- a2_freq
+    }
   }
-  # cat(maf, "\n")
-  if(maf>=min){
-    return("keep")
-  }else{
-    return(NULL)
-  }
+  return(maf)
 }
+
+
+single_site_genepop_basicstats <- function(dms, min, group){
+  # This function makes the genepop file for a dms with a single group (eg one species from one site),
+  # and then runs basicstats on that genepop. It removes loci where MAF is  < min specified in the input. 
+  # Also, loci should be filtered by missingness using `remove.poor.quality.snps(dms, min_repro=0.96,max_missing=0.3)` before usage. 
+  # This method is based on Jasons dart2genepop but is suitable for single group datasets.
+  
+  ds <- dms$gt
+  ds <- ds[,which(apply(ds,2,filter)>=min)]
+  cat(paste(ncol(ds))," loci are being used\n")
+  
+  # make into genepop format
+  old <- c("0","1","2", NA)
+  new <- c("0101","0102","0202","0000")
+  ds[ds %in% old] <- new[match(ds, old, nomatch = 0000)]
+  
+  # write genepop file
+  gf <- paste0(species, "/popgen/genepop_",group,".gen")
+  
+  cat(paste0("genepop file: ",species, " with MAF ", paste0(min)),
+      file=gf,sep="\n")
+  cat(colnames(ds),file=gf,sep="\n", append=TRUE)
+  cat("pop",file=gf,sep="\n", append=TRUE)
+  for (i in 1:nrow(ds)){
+    cat(c("pop1,", ds[i,], "\n"),file=gf,sep="\t", append=TRUE)
+  }
+  cat("pop",file=gf,sep="\n", append=TRUE)
+  for (i in 1:2){
+    cat(c("pop2,", ds[i,], "\n"),file=gf,sep="\t", append=TRUE)
+  }
+  
+  # do basic stats
+  bs <- diveRsity::basicStats(infile = gf, outfile = NULL,
+                              fis_ci = FALSE, ar_ci = TRUE, 
+                              ar_boots = 1000, 
+                              rarefaction = FALSE, ar_alpha = 0.05)
+  # return(bs)
+  # extract the stats
+  npop <- 1
+  result <- as.data.frame(mat.or.vec(npop,11))
+  measurement_names <- rownames(bs$main_tab[[1]])
+  population_names  <- names(bs$main_tab) #ls() rearranges the names
+  rownames(result) <- {{group}}
+  colnames(result) <- measurement_names
+  
+  for (r in 1:npop) {
+    popstats <- bs$main_tab[[r]][,"overall"] ##extract from a list
+    result[r,] <- popstats}
+  
+  return(result)
+} # end of single_site_genepop_basicstats
+
+multi_site_genepop_basicstats <- function(dms, min, group, grouping){
+  # This function makes the genepop file for a dms with multiple groups with low differentiation (eg one species from multiple sites).
+  # After creating the genepop file, this function runs basicstats. It removes loci where MAF is  < min specified in the input for the
+  # entire set rather than per group. 
+  # It is not suitable for multi-species datasets -- these should be split into single species before use. 
+  # Also, loci should be filtered by missingness using `remove.poor.quality.snps(dms, min_repro=0.96,max_missing=0.3)` before usage. 
+  # This method is based on Jasons dart2genepop but is suitable for single group datasets.
+  
+  ds <- dms$gt # get the altcount dataframe 
+  ds <- ds[,which(apply(ds,2,filter)>=min)] # filter it by the MAF and min MAF specified
+  cat(paste(ncol(ds))," loci are being used\n") # print the final ammount of loci being used
+  
+  # make into genepop format
+  old <- c("0","1","2", NA) 
+  new <- c("0101","0102","0202","0000")
+  ds[ds %in% old] <- new[match(ds, old, nomatch = 0000)] 
+  
+  # populations
+  pops <- unique(grouping) # get population names
+  
+  # write genepop file
+  gf <- paste0(species, "/popgen/genepop_",group,".gen") # make genepop file path
+  
+  cat(paste0("genepop file: ",species, " with MAF ", paste0(min)), # first line of genepop file
+      file=gf,sep="\n")
+  cat(colnames(ds),file=gf,sep="\n", append=TRUE) # one loci name per line
+  
+  remove <- c() # vector for populations excluded from the analysis 
+  
+  for (i in 1:length(pops)){ #loop for making the population groups
+    if (length(which(grouping %in% pops[i]))<=1){ # find if the population is n=1
+      cat("Removing population ", pops[i], " due to n=1")
+      remove <- c(remove, pops[i]) # add the pop name to remove vector
+    }else{
+      cat("pop",file=gf,sep="\n", append=TRUE) # add the data to the genepop file
+      df <- ds[which(grouping %in% pops[i]),]
+      for (j in 1:nrow(df)){
+        cat(c(paste0(pops[i],","),df[j,], "\n"),file=gf,sep="\t", append=TRUE)
+      }
+    }
+    
+  } #end of pops loop
+  
+  # # do basic stats
+  bs <- diveRsity::basicStats(infile = gf, outfile = NULL,
+                              fis_ci = FALSE, ar_ci = TRUE,
+                              ar_boots = 1000,
+                              rarefaction = FALSE, ar_alpha = 0.05)
+  # return(bs)
+  # extract the stats
+  npop <- length(pops)-length(remove)
+  result <- as.data.frame(mat.or.vec(npop,11))
+  measurement_names <- rownames(bs$main_tab[[1]])
+  population_names  <- names(bs$main_tab) #ls() rearranges the names
+  rownames(result) <- pops[!pops %in% remove]
+  colnames(result) <- measurement_names
+  
+  for (r in 1:npop) {
+    popstats <- bs$main_tab[[r]][,"overall"] ##extract from a list
+    result[r,] <- popstats}
+  
+  return(result)
+} # end of single_site_genepop_basicstats
+
 
 
 matcher2 <- function(df2, loci){
@@ -786,7 +894,7 @@ venner <- function(dms, pops, min_af){
   out <- vector()
   
   ds <- dms$gt
-  ds <- ds[,which(apply(ds,2,filter, min_af) %in% "keep")] #remove the low frequency snp sites
+  ds <- ds[,which(apply(ds,2,filter)>=min_af)] #remove the low frequency snp sites
   cat("Found ", ncol(ds), " poly sites\n")     
   loci <- data.frame("loci"=colnames(dms$gt),
                      "allele1"=paste(dms$locus_names,substr(dms$locus_nuc, start=1, stop=1)),
