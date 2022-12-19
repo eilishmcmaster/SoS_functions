@@ -911,3 +911,125 @@ venner <- function(dms, pops, min_af){
   }
   return(out)
 }
+
+
+# ploidy functions
+
+
+count_subsetter <- function(dms, count, min){
+  ds <- dms$gt # get the altcount dataframe 
+  ds <- ds[,which(apply(ds,2,filter)>=min)]
+  cat("Are there any NAs in the altcount data? ", any(is.na(ds)),"\n")
+  cat("Loci with NAs:")
+  print(table(apply(ds, 2, function(x) any(is.na(x)))))
+  
+  samples_tk <- dms$sample_names
+  loci_tk <- colnames(ds)
+  
+  s_tk_location <- which(count$sample_names %in% samples_tk)
+  l_tk_location <- which(count$locus_labels %in% loci_tk)
+  
+  count$c1 <- count$c1[l_tk_location,s_tk_location]
+  count$c2 <- count$c2[l_tk_location,s_tk_location]
+  count$sample_names <- colnames(count$c1)
+  count$locus_labels <- count$locus_labels[l_tk_location]
+  count$locus_names <- count$locus_names[l_tk_location]
+  
+  rownames(count$c1) <- count$locus_labels
+  rownames(count$c2) <- count$locus_labels
+  
+  
+  count$meta <- count$meta[,s_tk_location]
+  count$sample_qc <- count$sample_qc[,s_tk_location]
+  
+  return(count)
+}
+
+mergeLists_internal <- function(o_element, n_element){
+  if (is.list(n_element)){
+    # Fill in non-existant element with NA elements
+    if (length(n_element) != length(o_element)){
+      n_unique <- names(n_element)[! names(n_element) %in% names(o_element)]
+      if (length(n_unique) > 0){
+        for (n in n_unique){
+          if (is.matrix(n_element[[n]])){
+            o_element[[n]] <- matrix(NA, 
+                                     nrow=nrow(n_element[[n]]), 
+                                     ncol=ncol(n_element[[n]]))
+          }else{
+            o_element[[n]] <- rep(NA, 
+                                  times=length(n_element[[n]]))
+          }
+        }
+      }
+      
+      o_unique <- names(o_element)[! names(o_element) %in% names(n_element)]
+      if (length(o_unique) > 0){
+        for (n in o_unique){
+          if (is.matrix(n_element[[n]])){
+            n_element[[n]] <- matrix(NA, 
+                                     nrow=nrow(o_element[[n]]), 
+                                     ncol=ncol(o_element[[n]]))
+          }else{
+            n_element[[n]] <- rep(NA, 
+                                  times=length(o_element[[n]]))
+          }
+        }
+      }
+    }  
+    
+    # Now merge the two lists
+    return(mergeLists(o_element, 
+                      n_element))
+    
+  }
+  if(length(n_element)>1){
+    new_cols <- ifelse(is.matrix(n_element), ncol(n_element), length(n_element))
+    old_cols <- ifelse(is.matrix(o_element), ncol(o_element), length(o_element))
+    if (new_cols != old_cols)
+      stop("Your length doesn't match on the elements,",
+           " new element (", new_cols , ") !=",
+           " old element (", old_cols , ")")
+  }
+  return(rbind(o_element, 
+               n_element, 
+               deparse.level=0))
+  return(c(o_element, 
+           n_element))
+}
+mergeLists <- function(old, new){
+  if (is.null(old))
+    return (new)
+  
+  m <- mapply(mergeLists_internal, old, new, SIMPLIFY=FALSE)
+  return(m)
+}
+
+
+doitall <- function(dms, counts, min, name){
+  test2 <- count_subsetter(dms, counts, min)
+  
+  tr <-  t(test2$c1)
+  LMAo <- lapply(split(tr,rownames(tr)), as.list)
+  
+  tr2 <-  t(test2$c2)
+  LMAo2 <- lapply(split(tr2,rownames(tr2)), as.list)
+  
+  nn <- mergeLists_internal(LMAo, LMAo2)
+  
+  minor <- lapply(nn, sapply, function(x) min(x)/sum(x))
+  a <- do.call(rbind, minor) #make matrix
+  major <- lapply(nn, sapply, function(x) max(x)/sum(x))
+  b <- do.call(rbind, major) #make matrix
+  c <- cbind(a,b)
+  
+  return(hist(c,
+              breaks=50,
+              main=paste(name),
+              xlab="(mapped reads/ total reads) per allele"))
+}
+
+
+###
+
+
