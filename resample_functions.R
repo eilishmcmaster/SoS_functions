@@ -74,3 +74,100 @@ scheming_function <- function(dmv){ # get the sampling schemes
   }
   return(schemes)
 }
+
+
+# jasons function
+
+count_progeny <- function( pop, fam, tissue ) {
+  
+  families <- unique(fam)
+  ifam     <- which(tissue=="M")
+  ipro     <- which(tissue=="P")
+  npro     <- length(ipro)
+  nfam     <- length(families)
+  
+  out <- data.frame(population=as.character(rep("",nfam)), mother=as.character(rep("",nfam)), progeny=as.numeric(rep(0,nfam)))
+  
+  class(out$population) <- 'character'
+  class(out$mother) <- 'character'
+  
+  c <- 1
+  for (i in ifam) {
+    
+    n    <- length(which( fam==fam[i] & tissue == "P"))
+    p    <- pop[ which( fam==fam[i] & tissue == "M") ]
+    f    <- fam[ which( fam==fam[i] & tissue == "M") ]
+    
+    out$population[c] <- p
+    out[c, 2] <- f
+    out[c, 3] <- n
+    
+    c <- c + 1
+  }
+  return(out)
+}
+
+resample_progeny <- function( pop, fam, tissue, nseed, nfam, npop=NULL ) {
+  
+  cp <- count_progeny(pop, fam, tissue)
+  
+  class(cp$population) <- 'character'
+  class(cp$mother) <- 'character'
+  
+  pops     <- unique(cp$population)
+  
+  if (is.null(npop)) {
+    
+    npop = length(pops)
+    
+  }
+  
+  sout <- NULL
+  
+  spop <- sample(pops)[1:npop]
+  
+  for (p in spop) {
+    
+    # eligible fams
+    efams <- cp$mother[which( cp$population == p & cp$progeny >= nseed)]
+    
+    if (length(efams) == nfam) {
+      sfam <- efams
+    } 
+    
+    if (length(efams) > nfam) {
+      sfam <- sample(efams)[ 1:nfam ]
+    }
+    
+    if (length(efams) < nfam) {
+      cat("Warning: could not find enough families of nominated size...\nPopulation", p, efams, nfam); stop();
+    }
+    
+    # for fams in sfam, choose seeds
+    
+    for (f in sfam) {
+      
+      # eligible seeds
+      eseeds <- which( fam==f & tissue == "P")
+      
+      if (length(eseeds) == nseed) {
+        sseed <- eseeds
+      } 
+      
+      if (length(eseeds) > nseed) {
+        sseed <- sample(eseeds)[ 1:nseed ]
+      }
+      
+      if (length(eseeds) < nseed) {
+        cat("Warning: could not find enough seeds for nominated family...\n"); stop();
+      }
+      sout <- c(sout, sseed)
+      
+    }
+    
+  }
+  
+  return(sort(sout))
+  
+}
+
