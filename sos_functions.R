@@ -4,7 +4,7 @@ classifier_function <- function(qdf, plateau){
   return(qdf)
 }
 
-metadata.read <- function(species){
+metadata.read <- function(species){ # read in metadata exported from rnr database
   meta <- fread(paste(species, "/meta/",species,"_meta.csv", sep=""))
   meta1 <- meta %>% select_if(~!all(is.na(.))) # remove columns of all NA
   colnames(meta1)[colnames(meta1) == 'NSWnumber'] <- 'sample'
