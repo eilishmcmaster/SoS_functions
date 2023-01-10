@@ -14,7 +14,9 @@ allele_counter <- function(x, out){ # counts the number of alleles present in a 
 }
 
 resample_analysis_function <- function(dms,schemes, min_maf){
-  gt <- dms$gt[,which(apply(dms$gt,2,filter)>=min_maf)] # get loci with maf >= min_maf
+  ds <- dms$gt
+  gt <- ds[,which(get_minor_allele_frequencies(ds)>=min)]
+ # get loci with maf >= min_maf
   # dx <- which(apply(dms$gt,2,filter)<min_maf) # get loci with maf <0.05
   # dms_x <- remove.snps.from.dart.data(dms,dx) # remove the loci with maf<0.05
   # total_alleles <- 2*length(dms_x$locus_names)
