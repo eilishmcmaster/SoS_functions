@@ -761,6 +761,7 @@ get_minor_allele_frequencies <- function( gt ) {
     
   }
   return(min_freq) # return minor allele frequency for each locus in gt 
+}
 
 # filter <- function(x){ # find maf BAD 
 #   if (length(which(!is.na(x)))==0){ # if everything is NA, MAF= 0 
@@ -1047,4 +1048,7 @@ doitall <- function(dms, counts, min, name){
               breaks=50,
               main=paste(name),
               xlab="(mapped reads/ total reads) per allele"))
-  }
+}
+  
+#
+
