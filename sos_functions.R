@@ -839,7 +839,7 @@ multi_site_genepop_basicstats <- function(dms, min, group, grouping){
   # This method is based on Jasons dart2genepop but is suitable for single group datasets.
   
   ds <- dms$gt # get the altcount dataframe 
-  d  ds <- ds[,which(get_minor_allele_frequencies(ds)>=min)] # filter it by the MAF and min MAF specified
+  ds <- ds[,which(get_minor_allele_frequencies(ds)>=min)] # filter it by the MAF and min MAF specified
   cat(paste(ncol(ds))," loci are being used\n") # print the final ammount of loci being used
   
   # make into genepop format
@@ -1047,7 +1047,7 @@ doitall <- function(dms, counts, min, name){
               breaks=50,
               main=paste(name),
               xlab="(mapped reads/ total reads) per allele"))
-}
+  }
 
 
 ###
