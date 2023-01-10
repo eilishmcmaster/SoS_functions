@@ -744,20 +744,38 @@ bigger_optimisation <- function(N_t_vec, gt, max_wts){
 }}
 
 #for the venn diagram alleles
-filter <- function(x){ # find maf 
-  if (length(which(!is.na(x)))==0){ # if everything is NA, MAF= 0 
-    maf <- 0
-  }else{
-    a2_freq <- sum(x, na.rm = TRUE)/(length(which(!is.na(x)))*2) # data is altcount where homo2=0 heter0=1, homo2=2, so allele2 count is sum
-    a1_freq <- 1-a2_freq #allele 1 frequency 
-    if(a1_freq<a2_freq){ #choose the smaller allele frequency
-      maf <- a1_freq
-    }else{
-      maf<- a2_freq
-    }
+get_minor_allele_frequencies <- function( gt ) {
+  
+  alleles   <- 2*(colSums(!is.na(gt))) # total number of alleles for a locus (all samples in gt)
+  alt_freq  <- colSums(gt,na.rm=TRUE) / (alleles) # get the allele frequencies (altcount data can be summed because 0=homo1, 1=het, 2=homo2)
+  ref_freq  <- 1-alt_freq # get the alternative allele frequency
+  
+  min_freq <- alt_freq
+  for ( i in 1:ncol(gt) ) { # assign the minor allele to smaller value
+    
+    if ( alt_freq[i] > ref_freq[i] ) {
+      
+      min_freq[i] <- ref_freq[i]
+      
+    } 
+    
   }
-  return(maf)
-}
+  return(min_freq) # return minor allele frequency for each locus in gt 
+
+# filter <- function(x){ # find maf BAD 
+#   if (length(which(!is.na(x)))==0){ # if everything is NA, MAF= 0 
+#     maf <- 0
+#   }else{
+#     a2_freq <- sum(x, na.rm = TRUE)/(length(which(!is.na(x)))*2) # data is altcount where homo2=0 heter0=1, homo2=2, so allele2 count is sum
+#     a1_freq <- 1-a2_freq #allele 1 frequency 
+#     if(a1_freq<a2_freq){ #choose the smaller allele frequency
+#       maf <- a1_freq
+#     }else{
+#       maf<- a2_freq
+#     }
+#   }
+#   return(maf)
+# }
 
 
 single_site_genepop_basicstats <- function(dms, min, group){
@@ -767,7 +785,8 @@ single_site_genepop_basicstats <- function(dms, min, group){
   # This method is based on Jasons dart2genepop but is suitable for single group datasets.
   
   ds <- dms$gt
-  ds <- ds[,which(apply(ds,2,filter)>=min)]
+  # ds <- ds[,which(apply(ds,2,filter)>=min)]
+  ds <- ds[,which(get_minor_allele_frequencies(ds)>=min)]
   cat(paste(ncol(ds))," loci are being used\n")
   
   # make into genepop format
@@ -820,7 +839,7 @@ multi_site_genepop_basicstats <- function(dms, min, group, grouping){
   # This method is based on Jasons dart2genepop but is suitable for single group datasets.
   
   ds <- dms$gt # get the altcount dataframe 
-  ds <- ds[,which(apply(ds,2,filter)>=min)] # filter it by the MAF and min MAF specified
+  d  ds <- ds[,which(get_minor_allele_frequencies(ds)>=min)] # filter it by the MAF and min MAF specified
   cat(paste(ncol(ds))," loci are being used\n") # print the final ammount of loci being used
   
   # make into genepop format
@@ -895,7 +914,7 @@ venner <- function(dms, pops, min_af){
   out <- vector()
   
   ds <- dms$gt
-  ds <- ds[,which(apply(ds,2,filter)>=min_af)] #remove the low frequency snp sites
+  ds <- ds[,which(get_minor_allele_frequencies(ds)>=min)]#remove the low frequency snp sites
   cat("Found ", ncol(ds), " poly sites\n")     
   loci <- data.frame("loci"=colnames(dms$gt),
                      "allele1"=paste(dms$locus_names,substr(dms$locus_nuc, start=1, stop=1)),
@@ -919,7 +938,7 @@ venner <- function(dms, pops, min_af){
 
 count_subsetter <- function(dms, count, min){
   ds <- dms$gt # get the altcount dataframe 
-  ds <- ds[,which(apply(ds,2,filter)>=min)]
+  ds <- ds[,which(get_minor_allele_frequencies(ds)>=min)]
   cat("Are there any NAs in the altcount data? ", any(is.na(ds)),"\n")
   cat("Loci with NAs:")
   print(table(apply(ds, 2, function(x) any(is.na(x)))))
