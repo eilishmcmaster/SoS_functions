@@ -77,12 +77,12 @@ remove.by.list <- function(dms, list){ # list of samples to keep
 
 remove.by.maf <- function(dms, maf){
   ds <- dms$gt
-  keepers <- which(get_minor_allele_frequencies(ds)>=min)
-  dms$gt <- ds[,keepers]
-  dms$locus_names <- dms$locus_names[keepers]
-  dms$locus_repro <- dms$locus_repro[keepers]
-  dms$locus_pos <- dms$locus_pos[keepers]
-  dms$locus_nuc <- dms$locus_nuc[keepers]
+  keepers <- get_minor_allele_frequencies(ds)
+  dms$gt <- ds[,which(keepers>=maf)]
+  dms$locus_names <- dms$locus_names[which(keepers>=maf)]
+  dms$locus_repro <- dms$locus_repro[which(keepers>=maf)]
+  dms$locus_pos <- dms$locus_pos[which(keepers>=maf)]
+  dms$locus_nuc <- dms$locus_nuc[which(keepers>=maf)]
   
   return(dms)
 }
@@ -796,8 +796,8 @@ single_site_genepop_basicstats <- function(dms, min, group){
   # This method is based on Jasons dart2genepop but is suitable for single group datasets.
   
   ds <- dms$gt
-  # ds <- ds[,which(apply(ds,2,filter)>=min)]
-  ds <- ds[,which(get_minor_allele_frequencies(ds)>=min)]
+  keepers <- get_minor_allele_frequencies(ds)
+  ds <- ds[,which(keepers>=min)]
   cat(paste(ncol(ds))," loci are being used\n")
   
   # make into genepop format
@@ -849,8 +849,9 @@ multi_site_genepop_basicstats <- function(dms, min, group, grouping){
   # Also, loci should be filtered by missingness using `remove.poor.quality.snps(dms, min_repro=0.96,max_missing=0.3)` before usage. 
   # This method is based on Jasons dart2genepop but is suitable for single group datasets.
   
-  ds <- dms$gt # get the altcount dataframe 
-  ds <- ds[,which(get_minor_allele_frequencies(ds)>=min)] # filter it by the MAF and min MAF specified
+  ds <- dms$gt
+  keepers <- get_minor_allele_frequencies(ds)
+  ds <- ds[,which(keepers>=min)] # filter it by the MAF and min MAF specified
   cat(paste(ncol(ds))," loci are being used\n") # print the final ammount of loci being used
   
   # make into genepop format
@@ -925,7 +926,8 @@ venner <- function(dms, pops, min_af){
   out <- vector()
   
   ds <- dms$gt
-  ds <- ds[,which(get_minor_allele_frequencies(ds)>=min)]#remove the low frequency snp sites
+  keepers <- get_minor_allele_frequencies(ds)
+  ds <- ds[,which(keepers>=min)]#remove the low frequency snp sites
   cat("Found ", ncol(ds), " poly sites\n")     
   loci <- data.frame("loci"=colnames(dms$gt),
                      "allele1"=paste(dms$locus_names,substr(dms$locus_nuc, start=1, stop=1)),
@@ -948,8 +950,9 @@ venner <- function(dms, pops, min_af){
 
 
 count_subsetter <- function(dms, count, min){
-  ds <- dms$gt # get the altcount dataframe 
-  ds <- ds[,which(get_minor_allele_frequencies(ds)>=min)]
+  ds <- dms$gt
+  keepers <- get_minor_allele_frequencies(ds)
+  ds <- ds[,which(keepers>=min)]
   cat("Are there any NAs in the altcount data? ", any(is.na(ds)),"\n")
   cat("Loci with NAs:")
   print(table(apply(ds, 2, function(x) any(is.na(x)))))
