@@ -75,7 +75,17 @@ remove.by.list <- function(dms, list){ # list of samples to keep
   }
   return(dms)}
 
-
+remove.by.maf <- function(dms, maf){
+  ds <- dms$gt
+  keepers <- which(get_minor_allele_frequencies(ds)>=min)
+  dms$gt <- ds[,keepers]
+  dms$locus_names <- dms$locus_names[keepers]
+  dms$locus_repro <- dms$locus_repro[keepers]
+  dms$locus_pos <- dms$locus_pos[keepers]
+  dms$locus_nuc <- dms$locus_nuc[keepers]
+  
+  return(dms)
+}
 
 
 #continuous colour variable PCA
