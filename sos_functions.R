@@ -1048,8 +1048,3 @@ doitall <- function(dms, counts, min, name){
               main=paste(name),
               xlab="(mapped reads/ total reads) per allele"))
   }
-
-
-###
-
-
