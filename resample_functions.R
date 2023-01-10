@@ -21,7 +21,7 @@ resample_analysis_function <- function(dms,schemes, min_maf){
   # dx <- which(apply(dms$gt,2,filter)<min_maf) # get loci with maf <0.05
   # dms_x <- remove.snps.from.dart.data(dms,dx) # remove the loci with maf<0.05
   # total_alleles <- 2*length(dms_x$locus_names)
-  total_alleles <- 2*ncol(gt) # get total number of alleles (two alleles per loci)
+  total_alleles <- 2*ncol(gt) # get total number of alleles (two alleles per loci) FOR THIS RESAMPLE GROUP -- not the original population
   cat("Total alleles: ", total_alleles,"\n")
   
   schemes_out <- mat.or.vec(length(schemes), 4) # make empty df
