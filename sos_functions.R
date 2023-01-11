@@ -927,7 +927,7 @@ venner <- function(dms, pops, min_af){
   
   ds <- dms$gt
   keepers <- get_minor_allele_frequencies(ds)
-  dms$gt <- ds[,which(keepers>=min_af)]
+  ds <- ds[,which(keepers>=min_af)]
   cat("Found ", ncol(ds), " poly sites\n")     
   loci <- data.frame("loci"=colnames(dms$gt),
                      "allele1"=paste(dms$locus_names,substr(dms$locus_nuc, start=1, stop=1)),
