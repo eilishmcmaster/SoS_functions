@@ -13,7 +13,7 @@ allele_counter <- function(x, out){ # counts the number of alleles present in a 
   return(out)
 }
 
-resample_analysis_function <- function(dms,schemes, min_maf){
+resample_analysis_function <- function(dms,schemes, min_maf, pop){
   ds <- dms$gt
   keepers <- get_minor_allele_frequencies(ds)
   gt <- ds[,which(keepers>=min_maf)]
@@ -35,8 +35,9 @@ resample_analysis_function <- function(dms,schemes, min_maf){
     schemes_out[i,2] <- s$nfam
     schemes_out[i,3] <- sum(presence) #total number of alleles found
     schemes_out[i,4] <- sum(presence)/total_alleles # proportion of all common alleles
+    schemes_out[1,5] <- paste(pop)
   }
-  colnames(schemes_out) <- c("nseed","nfam", "alleles","prop_total_alleles")
+  colnames(schemes_out) <- c("nseed","nfam", "alleles","prop_total_alleles", "pop")
   return(schemes_out)
   
 }
