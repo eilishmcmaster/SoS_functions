@@ -763,7 +763,7 @@ get_minor_allele_frequencies <- function( gt ) {
   min_freq <- alt_freq
   for ( i in 1:ncol(gt) ) { # assign the minor allele to smaller value
     
-    if ( alt_freq[i] > ref_freq[i] ) {
+    if ( isTRUE(alt_freq[i] > ref_freq[i] )) {
       
       min_freq[i] <- ref_freq[i]
       
@@ -927,7 +927,7 @@ venner <- function(dms, pops, min_af){
   
   ds <- dms$gt
   keepers <- get_minor_allele_frequencies(ds)
-  ds <- ds[,which(keepers>=min)]#remove the low frequency snp sites
+  dms$gt <- ds[,which(keepers>=min_af)]
   cat("Found ", ncol(ds), " poly sites\n")     
   loci <- data.frame("loci"=colnames(dms$gt),
                      "allele1"=paste(dms$locus_names,substr(dms$locus_nuc, start=1, stop=1)),
