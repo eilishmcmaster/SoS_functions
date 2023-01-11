@@ -24,7 +24,7 @@ resample_analysis_function <- function(dms,schemes, min_maf, pop){
   total_alleles <- 2*ncol(gt) # get total number of alleles (two alleles per loci) FOR THIS RESAMPLE GROUP -- not the original population
   cat("Total alleles: ", total_alleles,"\n")
   
-  schemes_out <- mat.or.vec(length(schemes), 4) # make empty df
+  schemes_out <- mat.or.vec(length(schemes), 5) # make empty df
   # for each resampling scheme get the total number of common alleles present 
   for(i in 1:length(schemes)){
     s    <- schemes[[ i ]]
@@ -42,28 +42,69 @@ resample_analysis_function <- function(dms,schemes, min_maf, pop){
   
 }
 
-scheming_function <- function(dmv){ # get the sampling schemes
+# scheming_function <- function(dmv){ # get the sampling schemes
+#   
+#   pop    <- as.vector(dmv$meta$site)
+#   fam    <- as.vector(dmv$meta$analyses[,"families"])
+#   tissue <- dmv$meta$analyses[,"tissue"]
+#   tissue[which(dmv$meta$analyses[,"tissue"] == "mother")] <- "M"
+#   tissue[which(dmv$meta$analyses[,"tissue"] == "seedling")] <- "P"
+#   
+#   # set up randomization schemes
+#   
+#   nr = 10 # number of resamples per scheme
+#   scheme_list <- list()
+#   scheme_list[[ 1 ]] <- list(nseed=1, nfam=9, npop=NULL, nr=nr)
+#   scheme_list[[ 2 ]] <- list(nseed=2, nfam=5, npop=NULL, nr=nr)
+#   scheme_list[[ 3 ]] <- list(nseed=5, nfam=2, npop=NULL, nr=nr)
+#   scheme_list[[ 4 ]] <- list(nseed=10, nfam=1, npop=NULL, nr=nr)
+#   
+#   set.seed(9823984)
+#   
+#   schemes <- list()
+#   cs <- 1
+#   
+#   # loop through the schemes
+#   for (i in 1:length(scheme_list)) {
+#     
+#     s <- scheme_list[[ i ]]
+#     # loop through replicates
+#     for (i in 1:s$nr) { # schemes is a list of lists where each list is one resample (nseed and nfam specified) and the locations of individuals in the dataset are recorded. This allows the resampled individuals to be found in the proceeding simulations. 
+#       svec <- resample_progeny(pop, fam, tissue, nseed=s$nseed, nfam=s$nfam)
+#       sout <- list(nseed=s$nseed, nfam=s$nfam, svec=svec)
+#       schemes[[ cs ]] <- sout
+#       cs <- cs + 1
+#     }
+#   }
+#   return(schemes)
+# }
+
+
+scheming_functionx <- function(dmv, seedvector, famvector, nr){ # get the sampling schemes
   
-  pop    <- as.vector(dmv$meta$site)
+  pop    <- as.vector(dmv$meta$analyses[,"pop"])
   fam    <- as.vector(dmv$meta$analyses[,"families"])
   tissue <- dmv$meta$analyses[,"tissue"]
   tissue[which(dmv$meta$analyses[,"tissue"] == "mother")] <- "M"
   tissue[which(dmv$meta$analyses[,"tissue"] == "seedling")] <- "P"
   
   # set up randomization schemes
+  if(isTRUE(length(seedvector)==length(famvector))){
+    print("Seed and family vector are the same length, proceeding")
+  }else{
+    print("Seed and family vectors are different lengths, terminating process")
+    stop()
+  }
   
-  nr = 10 # number of resamples per scheme
   scheme_list <- list()
-  scheme_list[[ 1 ]] <- list(nseed=1, nfam=9, npop=NULL, nr=nr)
-  scheme_list[[ 2 ]] <- list(nseed=2, nfam=5, npop=NULL, nr=nr)
-  scheme_list[[ 3 ]] <- list(nseed=5, nfam=2, npop=NULL, nr=nr)
-  scheme_list[[ 4 ]] <- list(nseed=10, nfam=1, npop=NULL, nr=nr)
+  
+  for(i in 1:length(seedvector)){
+    scheme_list[[i]] <- list(nseed=seedvector[i], nfam=famvector[i], npop=NULL, nr=nr)
+  }
   
   set.seed(9823984)
-  
   schemes <- list()
   cs <- 1
-  
   # loop through the schemes
   for (i in 1:length(scheme_list)) {
     
@@ -78,6 +119,7 @@ scheming_function <- function(dmv){ # get the sampling schemes
   }
   return(schemes)
 }
+
 
 
 # jasons function
