@@ -35,7 +35,7 @@ resample_analysis_function <- function(dms,schemes, min_maf, pop){
     schemes_out[i,2] <- s$nfam
     schemes_out[i,3] <- sum(presence) #total number of alleles found
     schemes_out[i,4] <- sum(presence)/total_alleles # proportion of all common alleles
-    schemes_out[1,5] <- paste(pop)
+    schemes_out[i,5] <- paste(pop)
   }
   colnames(schemes_out) <- c("nseed","nfam", "alleles","prop_total_alleles", "pop")
   return(schemes_out)
