@@ -80,9 +80,51 @@ resample_analysis_function <- function(dms,schemes, min_maf, pop){
 # }
 
 
+# samples per population 
 scheming_functionx <- function(dmv, seedvector, famvector, nr){ # get the sampling schemes
   
   pop    <- as.vector(dmv$meta$analyses[,"pop"])
+  fam    <- as.vector(dmv$meta$analyses[,"families"])
+  tissue <- dmv$meta$analyses[,"tissue"]
+  tissue[which(dmv$meta$analyses[,"tissue"] == "mother")] <- "M"
+  tissue[which(dmv$meta$analyses[,"tissue"] == "seedling")] <- "P"
+  
+  # set up randomization schemes
+  if(isTRUE(length(seedvector)==length(famvector))){
+    print("Seed and family vector are the same length, proceeding")
+  }else{
+    print("Seed and family vectors are different lengths, terminating process")
+    stop()
+  }
+  
+  scheme_list <- list()
+  
+  for(i in 1:length(seedvector)){
+    scheme_list[[i]] <- list(nseed=seedvector[i], nfam=famvector[i], npop=NULL, nr=nr)
+  }
+  
+  set.seed(9823984)
+  schemes <- list()
+  cs <- 1
+  # loop through the schemes
+  for (i in 1:length(scheme_list)) {
+    
+    s <- scheme_list[[ i ]]
+    # loop through replicates
+    for (i in 1:s$nr) { # schemes is a list of lists where each list is one resample (nseed and nfam specified) and the locations of individuals in the dataset are recorded. This allows the resampled individuals to be found in the proceeding simulations. 
+      svec <- resample_progeny(pop, fam, tissue, nseed=s$nseed, nfam=s$nfam)
+      sout <- list(nseed=s$nseed, nfam=s$nfam, svec=svec)
+      schemes[[ cs ]] <- sout
+      cs <- cs + 1
+    }
+  }
+  return(schemes)
+}
+
+# this does not sample per population (all samples in dmv are used)
+scheming_functiony <- function(dmv, seedvector, famvector, nr){ # get the sampling schemes
+  
+  pop    <- rep("x", length(dmv$sample_names))
   fam    <- as.vector(dmv$meta$analyses[,"families"])
   tissue <- dmv$meta$analyses[,"tissue"]
   tissue[which(dmv$meta$analyses[,"tissue"] == "mother")] <- "M"
