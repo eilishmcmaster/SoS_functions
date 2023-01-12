@@ -13,6 +13,7 @@ allele_counter <- function(x, out){ # counts the number of alleles present in a 
   return(out)
 }
 
+
 resample_analysis_function <- function(dms,schemes, min_maf, pop){
   ds <- dms$gt
   keepers <- get_minor_allele_frequencies(ds)
