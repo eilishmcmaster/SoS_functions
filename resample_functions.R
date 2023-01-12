@@ -17,14 +17,16 @@ resample_analysis_function <- function(dms,schemes, min_maf, pop){
   ds <- dms$gt
   keepers <- get_minor_allele_frequencies(ds)
   gt <- ds[,which(keepers>=min_maf)]
- # get loci with maf >= min_maf
+  # get loci with maf >= min_maf
   # dx <- which(apply(dms$gt,2,filter)<min_maf) # get loci with maf <0.05
   # dms_x <- remove.snps.from.dart.data(dms,dx) # remove the loci with maf<0.05
   # total_alleles <- 2*length(dms_x$locus_names)
-  total_alleles <- 2*ncol(gt) # get total number of alleles (two alleles per loci) FOR THIS RESAMPLE GROUP -- not the original population
-  cat("Total alleles: ", total_alleles,"\n")
+  total_loci <- ncol(gt) # get total number of alleles (two alleles per loci) FOR THIS RESAMPLE GROUP -- not the original population
+  total_alleles <- sum(apply(gt,2,allele_counter)) # get total number of alleles (two alleles per loci) FOR THIS RESAMPLE GROUP -- not the original population
   
-  schemes_out <- mat.or.vec(length(schemes), 5) # make empty df
+  cat("Total loci passing maf: ", total_loci,"\n")
+  
+  schemes_out <- mat.or.vec(length(schemes), 6) # make empty df
   # for each resampling scheme get the total number of common alleles present 
   for(i in 1:length(schemes)){
     s    <- schemes[[ i ]]
@@ -34,14 +36,14 @@ resample_analysis_function <- function(dms,schemes, min_maf, pop){
     schemes_out[i,1] <- s$nseed 
     schemes_out[i,2] <- s$nfam
     schemes_out[i,3] <- sum(presence) #total number of alleles found
-    schemes_out[i,4] <- sum(presence)/total_alleles # proportion of all common alleles
-    schemes_out[i,5] <- paste(pop)
+    schemes_out[i,4] <- total_loci # numver of loci passing initial maf for this group
+    schemes_out[i,5] <- total_alleles # numver of loci passing initial maf for this group
+    schemes_out[i,6] <- paste(pop)
   }
-  colnames(schemes_out) <- c("nseed","nfam", "alleles","prop_total_alleles", "pop")
+  colnames(schemes_out) <- c("nseed","nfam", "alleles","total_loci","total_alleles", "pop")
   return(schemes_out)
   
 }
-
 # scheming_function <- function(dmv){ # get the sampling schemes
 #   
 #   pop    <- as.vector(dmv$meta$site)
