@@ -918,7 +918,7 @@ multispecies_stats <- function(dms, maf){ # calculates whole species stats for a
       remove.poor.quality.snps(., min_repro=0.96,max_missing=0.3) %>%
       remove.by.maf(., maf)
     
-    out <- single_site_genepop_basicstatsx(dmsx, maf, paste(species[i]))
+    out <- single_site_genepop_basicstats(dmsx, maf, paste(species[i]))
     out_list[[i]] <- out
   }
   out_df <- do.call(rbind, out_list)
