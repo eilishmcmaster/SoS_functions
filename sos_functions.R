@@ -838,6 +838,8 @@ single_site_genepop_basicstats <- function(dms, min, group){
     popstats <- bs$main_tab[[r]][,"overall"] ##extract from a list
     result[r,] <- popstats}
   
+  result$loci <- ncol(ds)
+  
   return(result)
 } # end of single_site_genepop_basicstats
 
