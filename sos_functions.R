@@ -908,7 +908,22 @@ multi_site_genepop_basicstats <- function(dms, min, group, grouping){
   return(result)
 } # end of single_site_genepop_basicstats
 
-
+multispecies_stats <- function(dms, maf){ # calculates whole species stats for a dms where species =sp
+  species <- unique(dms$meta$analyses[,"sp"])
+  print(species)
+  out_list <- list()
+  
+  for(i in 1:length(species)){
+    dmsx <- remove.by.list(dms, m2[(m2$sp %in% paste(species[i])),] %>%.$sample) %>% 
+      remove.poor.quality.snps(., min_repro=0.96,max_missing=0.3) %>%
+      remove.by.maf(., maf)
+    
+    out <- single_site_genepop_basicstatsx(dmsx, maf, paste(species[i]))
+    out_list[[i]] <- out
+  }
+  out_df <- do.call(rbind, out_list)
+  return(out_df)
+}
 
 matcher2 <- function(df2, loci){
   df <- df2[-1]
