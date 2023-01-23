@@ -908,8 +908,8 @@ multi_site_genepop_basicstats <- function(dms, min, group, grouping){
   return(result)
 } # end of single_site_genepop_basicstats
 
-multispecies_stats <- function(dms, maf){ # calculates whole species stats for a dms where species =sp
-  species <- unique(dms$meta$analyses[,"sp"])
+multispecies_stats <- function(dms, maf, variable){ # calculates whole species stats for a dms where species =sp
+  species <- unique({{variable}}) # was previuously dms$meta$analyses[,"sp"]
   print(species)
   out_list <- list()
   
