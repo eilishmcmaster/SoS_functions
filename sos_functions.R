@@ -908,13 +908,13 @@ multi_site_genepop_basicstats <- function(dms, min, group, grouping){
   return(result)
 } # end of single_site_genepop_basicstats
 
-multispecies_stats <- function(dms, maf, variable){ # calculates whole species stats for a dms where species =sp
-  species <- unique(dms$meta$analyses[,{{variable}}]) # was previuously dms$meta$analyses[,"sp"]
+multispecies_stats <- function(dms, maf, var){ # calculates whole species stats for a dms where species =sp
+  species <- unique(var)
   print(species)
   out_list <- list()
   
   for(i in 1:length(species)){
-    dmsx <- remove.by.list(dms, m2[(m2[,{{variable}}] %in% paste(species[i])),] %>%.$sample) %>% 
+    dmsx <- remove.by.list(dms, m2[(var %in% paste(species[i])),] %>%.$sample) %>% 
       remove.poor.quality.snps(., min_repro=0.96,max_missing=0.3) %>%
       remove.by.maf(., maf)
     
