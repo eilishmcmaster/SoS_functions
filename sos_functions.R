@@ -914,7 +914,7 @@ multispecies_stats <- function(dms, maf, var){ # calculates whole species stats 
   out_list <- list()
   
   for(i in 1:length(species)){
-    dmsx <- remove.by.list(dms, m2[(var %in% paste(species[i])),] %>%.$sample) %>% 
+    dmsx <- remove.by.list(dms, dms$sample_names[(var %in% paste(species[i]))]) %>% 
       remove.poor.quality.snps(., min_repro=0.96,max_missing=0.3) %>%
       remove.by.maf(., maf)
     
