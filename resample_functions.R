@@ -341,6 +341,178 @@ resample_progeny_nas2 <- function( pop, fam, tissue, nseed, nfam, npop ) {
 }
 
 ##
+
+resample_progeny_nas <- function( pop, fam, tissue, nseed, nfam, npop ) {
+  
+  cp <- count_progeny(pop, fam, tissue)
+  
+  class(cp$population) <- 'character'
+  class(cp$mother) <- 'character'
+  
+  pops     <- unique(cp$population)
+  
+  if (is.null(npop)) {
+    
+    npop = length(pops)
+    
+  }
+  
+  sout <- NULL
+  
+  if(length(pops)>=npop){ #if the actual number of populations is greater or equal to the requested number of pops, proceed
+    spop <- sample(pops)[1:npop] # get a random sample of the populations 
+    
+    for (p in spop) { #for each population
+      
+      # eligible fams -- which families are in the selected population and have the appropriate number of seeds
+      efams <- cp$mother[which( cp$population == p & cp$progeny >= nseed)]
+      
+      if (length(efams) == nfam) {
+        sfam <- efams
+      } 
+      
+      if (length(efams) > nfam) {
+        sfam <- sample(efams)[ 1:nfam ]
+      }
+      
+      if (length(efams) < nfam) {
+        cat("Warning: could not find enough families of nominated size...\nPopulation", p, efams, nfam)
+        sfam <- NULL
+      }
+      
+      # for fams in sfam, choose seeds
+      for (f in sfam) { # for each family that is eligible
+        
+        # eligible seeds
+        eseeds <- which( fam==f & tissue == "P") # find the eligible seeds 
+        
+        if (length(eseeds) == nseed) {
+          sseed <- eseeds
+        } 
+        
+        if (length(eseeds) > nseed) {
+          sseed <- sample(eseeds)[ 1:nseed ]
+        }
+        
+        if (length(eseeds) < nseed) {
+          cat("Warning: could not find enough seeds for nominated family...\n")
+          sseed <- NULL
+        }
+        
+        
+        sout <- c(sout, sseed)
+      } # for families in population
+      
+    } #end for p in spops
+    
+  }
+  
+  if((npop*nfam*nseed)!=length(sout)){ # if the number of seeds returned doesn't match the requested number
+    sout <-  NULL
+  }
+  return(sort(sout))
+  
+} #end function
+
+
+
+
+scheming_functionz <- function(dmv, seedvector, famvector, popvector, nr){ # get the sampling schemes
+  
+  pop    <- as.vector(dmv$meta$analyses[,"pop"])
+  fam    <- as.vector(dmv$meta$analyses[,"families"])
+  tissue <- dmv$meta$analyses[,"tissue"]
+  tissue[which(dmv$meta$analyses[,"tissue"] == "mother")] <- "M"
+  tissue[which(dmv$meta$analyses[,"tissue"] == "seedling")] <- "P"
+  
+  # set up randomization schemes
+  if(isTRUE(length(seedvector)==length(famvector))){
+    print("Seed and family vector are the same length, proceeding")
+  }else{
+    print("Seed and family vectors are different lengths, terminating process")
+    stop()
+  }
+  
+  scheme_list <- list()
+  
+  for(i in 1:length(seedvector)){
+    scheme_list[[i]] <- list(nseed=seedvector[i], nfam=famvector[i], npop=popvector[i], nr=nr)
+  }
+  
+  set.seed(9823984)
+  schemes <- list()
+  cs <- 1
+  # loop through the schemes
+  for (i in 1:length(scheme_list)) {
+    
+    s <- scheme_list[[ i ]]
+    # loop through replicates
+    for (i in 1:s$nr) { # schemes is a list of lists where each list is one resample (nseed and nfam specified) and the locations of individuals in the dataset are recorded. This allows the resampled individuals to be found in the proceeding simulations. 
+      svec <- resample_progeny_nas(pop, fam, tissue, nseed=s$nseed, nfam=s$nfam, npop=s$npop)
+      sout <- list(nseed=s$nseed, nfam=s$nfam, npop=s$npop, svec=svec)
+      schemes[[ cs ]] <- sout
+      cs <- cs + 1
+    }
+  }
+  return(schemes)
+}
+
+
+resample_analysis_functionz <- function(dms,schemes, min_maf, pop){
+  ds <- dms$gt
+  keepers <- get_minor_allele_frequencies(ds)
+  gt <- ds[,which(keepers>=min_maf)]
+  
+  total_loci <- ncol(gt) # get total number of alleles (two alleles per loci) FOR THIS RESAMPLE GROUP -- not the original population
+  total_alleles <- sum(apply(gt,2,allele_counter)) # get total number of alleles (two alleles per loci) FOR THIS RESAMPLE GROUP -- not the original population
+  
+  cat("Total loci passing maf: ", total_loci,"\n")
+  
+  schemes_out <- mat.or.vec(length(schemes), 9) # make empty df
+  # for each resampling scheme get the total number of common alleles present 
+  for(i in 1:length(schemes)){
+    s    <- schemes[[ i ]]
+    ivec <- s$svec # locations of the resampled individuals
+    gti  <- gt[ ivec, ] # get the altcount of the resampled individuals
+    if(isTRUE(is.null(nrow(gti)))){ # if the df is a single row (vector, one sample)
+      presence <- sapply(gti, allele_counter, simplify="vector")
+    }else{
+      presence <- apply(gti,2,allele_counter) # for each loci, determine if there are one, two, or NA alleles found and write to a df
+    }
+    
+    schemes_out[i,1] <- s$nseed 
+    schemes_out[i,2] <- s$nfam
+    schemes_out[i,3] <- s$npop
+    # should i add total seeds ?
+    schemes_out[i,4] <- sum(presence) #total number of alleles found
+    schemes_out[i,5] <- total_loci # numver of loci passing initial maf for this group
+    schemes_out[i,6] <- total_alleles # numver of loci passing initial maf for this group
+    schemes_out[i,7] <- sum(presence)/(2*total_loci) #
+    schemes_out[i,8] <- sum(presence)/(total_alleles) #
+    schemes_out[i,9] <- paste(pop)
+    
+  }
+  colnames(schemes_out) <- c("nseed","nfam", "npop", "alleles","total_loci","total_alleles", "prop_all","prop_pergroup","pop")
+  
+  return(schemes_out)
+  
+}
+
+
+cleanup_out_list <- function(out){
+  out_df <- do.call(rbind, out)
+  out_df <- as.data.frame(out_df)
+  out_df[,1:8] <- lapply(out_df[,1:8],as.numeric)
+  out_df[which(out_df$alleles==0), "alleles"] <- NA # important, replaces 0 with NA
+  out_df[which(out_df$prop_pergroup==0), "prop_pergroup"] <- NA # important, replaces 0 with NA
+  out_df[which(out_df$prop_all==0), "prop_pergroup"] <- NA # important, replaces 0 with NA
+  
+  return(out_df)
+}
+
+
+
+##
 scheming_functionz2 <- function(dmv, seedvector, famvector, popvector, nr){ # get the sampling schemes
   
   pop    <- as.vector(dmv$meta$analyses[,"pop"])
