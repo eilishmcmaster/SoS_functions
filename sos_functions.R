@@ -1082,3 +1082,24 @@ doitall <- function(dms, counts, min, name){
   
 #
 
+percent_polymorphic <- function(dms, missingness, maf, var){ # calculates the proportion of loci that are polymorphic vs not 
+  species <- unique(var)
+  print(species)
+  out_df <-  as.data.frame(mat.or.vec(length(species),5))
+  colnames(out_df) <- c("species", "all_loci", "poly_loci", "fixed_loci", "ppl")
+  
+  for(i in 1:length(species)){
+    dmsx <- remove.by.list(dms, dms$sample_names[(var %in% paste(species[i]))]) %>% 
+      remove.poor.quality.snps(., min_repro=0.96,max_missing=missingness)
+    
+    dmsx2 <- remove.by.maf(dmsx, maf)
+    
+    all_loci <- length(dmsx$locus_names)
+    poly_loci <- length(dmsx2$locus_names)
+    fixed_loci <- all_loci - poly_loci
+    ppl <- 100 * (poly_loci/all_loci)
+    
+    out_df[i, ] <- c(paste0(species[i]), all_loci, poly_loci, fixed_loci, round(ppl, 2))
+  }
+  return(out_df)
+}
