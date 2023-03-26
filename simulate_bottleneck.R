@@ -83,8 +83,9 @@ ref_allele_frequencies <- function( gt ) {
 # far out rate is the probability of crossing with the source population 
 
 simulate_populations <- function(pop_size, outcross,far_out_rate, generations, num_loci, He_specified, Ho_specified) {
-  He_list <- list()
-  out_list <- list()
+  He_list <- data.table(matrix(nrow = 0, ncol = generations))
+  out_list <- data.table(matrix(nrow = 0, ncol = generations))
+  
   name_vector <- character()
   
   for(j in 1:length(pop_size)){
@@ -134,13 +135,19 @@ simulate_populations <- function(pop_size, outcross,far_out_rate, generations, n
         }
         current_generation_genotypes <- new_genotypes %>% as.data.frame(.)
       }
-      He_list <- append(He_list, list(He_all))
-      out_list<- append(out_list, list(Ho_all))
+      He_list <- rbindlist(list(He_list, as.list(He_all)))
+      out_list <- rbindlist(list(out_list, as.list(Ho_all)))
+      
       # name_vector <- c(name_vector, paste0(pop_size[j],"_",outcross[z], "_", far_out_rate[z]))  
       name_vector <- c(name_vector, paste0(pop_size[j],"_",outcross[z]))  
       
     }
+    gc()
   }
+  
+  result <- list(He = He_list, Ho = out_list, name = name_vector)
+  return(result)
+}
   
   result <- list(He = He_list, Ho = out_list, name = name_vector)
   return(result)
