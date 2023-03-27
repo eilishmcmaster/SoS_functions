@@ -148,10 +148,6 @@ simulate_populations <- function(pop_size, outcross,far_out_rate, generations, n
   result <- list(He = He_list, Ho = out_list, name = name_vector)
   return(result)
 }
-  
-  result <- list(He = He_list, Ho = out_list, name = name_vector)
-  return(result)
-}
 
 
 get_outcross_allele <- function(x){ # x is locus in a genotype vector
