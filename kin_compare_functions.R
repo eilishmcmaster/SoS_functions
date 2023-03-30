@@ -41,12 +41,6 @@ dist_kinship_matrix <- function(gt){
   return(kin_invert)
 }
 
-kinship_by_relationship <- function(kin, meta){ # kin is any pairwise kinship matrix, meta must have sample column 
-  kin[upper.tri(kin, diag=FALSE)] <- NA
-  kin_df <- melt(kin, na.rm=TRUE)
-  kin_df$relationship <- apply(kin_df, 1, check_relationship, external_df = meta)
-  return(kin_df)
-}
 
 popkin_kinship_matrix <- function(gt){
   X <- t(gt)
@@ -60,4 +54,16 @@ snprelate_kinship_matrix <- function(snpKin){
   colnames(snpKin_matrix) <- snpKin$sample.id
   rownames(snpKin_matrix) <- snpKin$sample.id
   return(snpKin_matrix)
+}
+
+kinship_by_relationship <- function(kin,parent_offspring, meta){ # kin is any pairwise kinship matrix, meta must have sample column 
+  kin[upper.tri(kin, diag=FALSE)] <- NA
+  kin_df <- melt(kin, na.rm=TRUE)
+  
+  if("tissue" %in% colnames(meta)){
+    kin_df <- merge(kin_df, parent_offspring, all.x=TRUE) %>% as.data.frame()
+  }
+  
+  kin_df$relationship <- apply(kin_df, 1, check_relationship, external_df = meta)
+  return(kin_df)
 }
