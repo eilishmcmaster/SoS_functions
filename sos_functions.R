@@ -925,6 +925,48 @@ multispecies_stats <- function(dms, maf, var){ # calculates whole species stats 
   return(out_df)
 }
 
+
+species_site_stats <- function(dms, maf, sp_var, site_var){ 
+  # This function allows you to calculate site stats for multiple genetic groups at the same time
+  # dms has all of the samples youre interested in 
+  # MAF is the threshold (0.05 usually)
+  # sp_var is the genetic group -- use genetic groups to avoid biasing calculations
+  # site_var is the sites within genetic groups to calculate stats for -- has to be a column name in the dms$meta$analyses dataframe 
+  
+  # example : site_stats <- species_site_stats(dms, 0.05, dms$meta$analyses[,"genetic_group2"], "site2")
+  
+  species <- unique(sp_var)
+  print(species)
+  out_list <- list()
+  
+  for(i in 1:length(species)){
+    dmsx <- remove.by.list(dms, dms$sample_names[(sp_var %in% paste(species[i]))]) %>% 
+      remove.poor.quality.snps(., min_repro=0.96,max_missing=0.3) %>%
+      remove.by.maf(., maf)
+    sites <- dmsx$meta$analyses[,site_var]
+    print((unique(sites)))
+    if(length(unique(sites))>=2){
+      out <- multi_site_genepop_basicstats(dmsx, maf, paste(species[i]), dmsx$meta$analyses[,site_var])
+      freq <- table(dmsx$meta$analyses[,site_var]) %>% data.frame()
+      out$species <- paste(species[i])
+      out <- merge(out, freq, by.x=0, by.y="Var1", all.y=FALSE)
+      out_list[[i]] <- out
+    }
+    if(length(unique(sites))==1){
+      out <- single_site_genepop_basicstats(dmsx, maf, paste(unique(sites)))
+      out$species <- paste(species[i])
+      out$Row.names <- rownames(out)
+      rownames(out) <- NULL
+      out$Freq <- length(dmsx$sample_names)
+      out_list[[i]] <- out
+    }
+  }
+  out_df <- do.call(rbind, out_list)
+  return(out_df)
+}
+
+
+
 matcher2 <- function(df2, loci){
   df <- df2[-1]
   out <- vector()
