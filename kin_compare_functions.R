@@ -37,7 +37,7 @@ check_relationship <- function(row, external_df){
 
 dist_kinship_matrix <- function(gt){
   kin <- as.matrix(dist(gt, diag=TRUE))
-  kin_invert <- 1- (kin/max(kin))
+  kin_invert <- 1- (kin/max(kin, na.rm=TRUE))
   return(kin_invert)
 }
 
