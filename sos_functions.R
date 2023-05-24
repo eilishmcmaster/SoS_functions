@@ -951,6 +951,7 @@ species_site_stats <- function(dms, maf, pop_var, site_var){
   # @pop_var Name of the variable containing populations/genetic neighbourhoods
   # @site_var Name of the variable containing sites
   
+  
   if(isTRUE(site_var %in% names(dms[["meta"]])) &
      isFALSE(site_var %in% colnames(dms[["meta"]][["analyses"]]))){ #if "site" is in dms$meta and isnt in $analyses...
     dms[["meta"]][["analyses"]] <- cbind(dms[["meta"]][["analyses"]], site =unlist(dms[["meta"]][site_var], use.names=FALSE) )
@@ -964,13 +965,23 @@ species_site_stats <- function(dms, maf, pop_var, site_var){
     stop("ERROR: cannot find population variable")
   }
   
+  if(all(is.na(dms[["meta"]][["analyses"]][,site_var]))){
+    stop("ERROR: site_var is empty")
+  }
+  if(all(is.na(dms[["meta"]][["analyses"]][,pop_var]))){
+    stop("ERROR: pop_var is empty")
+  }
+  
   # removes samples with no site or sp classification
   samples_with_sp_and_site <- dms[["sample_names"]][-which(is.na(dms[["meta"]][["analyses"]][,site_var]) |
                                                              is.na(dms[["meta"]][["analyses"]][,pop_var]))]
-  if(length(samples_with_sp_and_site)){
+  if(length(samples_with_sp_and_site)>=2){
     dms <- remove.by.list(dms, samples_with_sp_and_site)
   }
-
+  if(length(dms[["sample_names"]])<=2){
+    stop("ERROR: not enough samples to proceed (<=2)")
+  }
+  
   # removes samples with only one sample per site
   tab <- table(dms[["meta"]][["analyses"]][,pop_var], dms[["meta"]][["analyses"]][,site_var]) %>% as.data.table(.) 
   if(1 %in% tab[,N]){
@@ -1032,7 +1043,6 @@ species_site_stats <- function(dms, maf, pop_var, site_var){
     print("WARNING: no data created")
   }
 }
-
 
 matcher2 <- function(df2, loci){
   df <- df2[-1]
