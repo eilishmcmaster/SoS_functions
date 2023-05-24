@@ -963,7 +963,6 @@ species_site_stats <- function(dms, maf, pop_var, site_var){
   if(isFALSE(pop_var %in% colnames(dms[["meta"]][["analyses"]]))){
     stop("ERROR: cannot find population variable")
   }
-  print(dms[["meta"]][["analyses"]])
   
   # removes samples with no site or sp classification
   samples_with_sp_and_site <- dms[["sample_names"]][-which(is.na(dms[["meta"]][["analyses"]][,site_var]) |
@@ -971,20 +970,16 @@ species_site_stats <- function(dms, maf, pop_var, site_var){
   if(length(samples_with_sp_and_site)){
     dms <- remove.by.list(dms, samples_with_sp_and_site)
   }
-  print(dms[["meta"]][["analyses"]])
-  
+
   # removes samples with only one sample per site
   tab <- table(dms[["meta"]][["analyses"]][,pop_var], dms[["meta"]][["analyses"]][,site_var]) %>% as.data.table(.) 
-  print("test2")
   if(1 %in% tab[,N]){
     tab <- tab[N == 1, ]
-    print("t2")
     not_small <- dms[["sample_names"]][which(!(dms[["meta"]][["analyses"]][,pop_var] %in% tab$V1 &
                                                  dms[["meta"]][["analyses"]][,site_var] %in% tab$V2))]
     dms <- remove.by.list(dms, not_small)
   }
   
-  print("t3")
   # remove whitespaces
   dms[["meta"]][["analyses"]][,site_var] <- gsub("\\s", "_", dms[["meta"]][["analyses"]][,site_var])
   dms[["meta"]][["analyses"]][,site_var] <- gsub(",", "", dms[["meta"]][["analyses"]][,site_var])
