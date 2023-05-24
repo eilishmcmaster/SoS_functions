@@ -946,15 +946,15 @@ species_site_stats <- function(dms, maf, pop_var, site_var){
   # site_var is the sites within genetic groups to calculate stats for -- has to be a column name in the dms$meta$analyses dataframe 
   
   # example : x <- species_site_stats(dms, maf=0.05, pop_var="sp", site_var="site")
-  #' @dms Genind structure built by RRtools with the samples of interest
-  #' @maf Minor allele frequency
-  #' @pop_var Name of the variable containing populations/genetic neighbourhoods
-  #' @site_var Name of the variable containing sites
+  # @dms Genind structure built by RRtools with the samples of interest
+  # @maf Minor allele frequency
+  # @pop_var Name of the variable containing populations/genetic neighbourhoods
+  # @site_var Name of the variable containing sites
   
   if(isTRUE(site_var %in% names(dms[["meta"]])) &
      isFALSE(site_var %in% colnames(dms[["meta"]][["analyses"]]))){ #if "site" is in dms$meta and isnt in $analyses...
-    dms[["meta"]][["analyses"]] <- cbind(dms[["meta"]][["analyses"]], unlist(dms[["meta"]][site_var], use.names=FALSE) )
-    colnames(dms[["meta"]][["analyses"]])[ncol(dms[["meta"]][["analyses"]])-1] <- paste(site_var)
+    dms[["meta"]][["analyses"]] <- cbind(dms[["meta"]][["analyses"]], site =unlist(dms[["meta"]][site_var], use.names=FALSE) )
+    colnames(dms[["meta"]][["analyses"]])[ncol(dms[["meta"]][["analyses"]])] <- paste(site_var)
   } 
   
   if(isFALSE(site_var %in% colnames(dms[["meta"]][["analyses"]]))){
@@ -963,25 +963,35 @@ species_site_stats <- function(dms, maf, pop_var, site_var){
   if(isFALSE(pop_var %in% colnames(dms[["meta"]][["analyses"]]))){
     stop("ERROR: cannot find population variable")
   }
+  print(dms[["meta"]][["analyses"]])
   
   # removes samples with no site or sp classification
   samples_with_sp_and_site <- dms[["sample_names"]][-which(is.na(dms[["meta"]][["analyses"]][,site_var]) |
                                                              is.na(dms[["meta"]][["analyses"]][,pop_var]))]
-  
-  dms <- remove.by.list(dms, samples_with_sp_and_site)
+  if(length(samples_with_sp_and_site)){
+    dms <- remove.by.list(dms, samples_with_sp_and_site)
+  }
+  print(dms[["meta"]][["analyses"]])
   
   # removes samples with only one sample per site
-  tab <- table(dms[["meta"]][["analyses"]][,pop_var], dms[["meta"]][["analyses"]][,site_var]) %>% as.data.table(tab) %>% .[N == 1, ]
-  not_small <- dms[["sample_names"]][which(!(dms[["meta"]][["analyses"]][,pop_var] %in% tab$V1 &
-                                               dms[["meta"]][["analyses"]][,site_var] %in% tab$V2))]
-  dms <- remove.by.list(dms, not_small)
+  tab <- table(dms[["meta"]][["analyses"]][,pop_var], dms[["meta"]][["analyses"]][,site_var]) %>% as.data.table(.) 
+  print("test2")
+  if(1 %in% tab[,N]){
+    tab <- tab[N == 1, ]
+    print("t2")
+    not_small <- dms[["sample_names"]][which(!(dms[["meta"]][["analyses"]][,pop_var] %in% tab$V1 &
+                                                 dms[["meta"]][["analyses"]][,site_var] %in% tab$V2))]
+    dms <- remove.by.list(dms, not_small)
+  }
   
+  print("t3")
   # remove whitespaces
   dms[["meta"]][["analyses"]][,site_var] <- gsub("\\s", "_", dms[["meta"]][["analyses"]][,site_var])
   dms[["meta"]][["analyses"]][,site_var] <- gsub(",", "", dms[["meta"]][["analyses"]][,site_var])
-
+  
   dms[["meta"]][["analyses"]][,pop_var] <- gsub("\\s", "_", dms[["meta"]][["analyses"]][,pop_var])
   dms[["meta"]][["analyses"]][,pop_var] <- gsub(",", "", dms[["meta"]][["analyses"]][,pop_var])
+  
   
   out_list <- list()
   genetic_group <- unique(dms[["meta"]][["analyses"]][,pop_var])
