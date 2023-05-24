@@ -59,14 +59,16 @@ remove.by.meta <- function(dms, meta){
   dms$sample_names <- dms$sample_names[-missing]
   return(dms)}
 
-remove.by.list <- function(dms, list){ # list of samples to keep
+remove.by.list <-function(dms, list){ # list of samples to keep
   missing <- which(!(dms$sample_names %in% list))
   if(length(missing)!=0){
     cat(length(missing))
     dms$gt <- dms$gt[-missing, ]
     dms$sample_names <- dms$sample_names[-missing]
     
-    for(i in  1:4){
+    meta_names <- which(!names(dms$meta) %in% "analyses") # get the meta that re not called "analyses"
+    
+    for(i in  meta_names){
       main_meta <- dms$meta[[i]]
       
       dms$meta[[i]] <- main_meta[-missing]
