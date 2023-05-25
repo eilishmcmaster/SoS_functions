@@ -1222,3 +1222,28 @@ percent_polymorphic <- function(dms, missingness, maf, var){ # calculates the pr
   }
   return(out_df)
 }
+
+
+remove_missing_loci_by_pop <- function(dms, pop_var, missingness){
+  # remove loci with missingness higher than the specified value in all populations provided 
+  out_list <- list()
+  genetic_group <- unique(dms[["meta"]][["analyses"]][,pop_var])
+  
+  if(length(genetic_group)<=1){
+    stop("ERROR: <=1 population found in pop_var, use a different method")
+  }
+  
+  for(i in 1:length(genetic_group)){
+    samples <- dms[["sample_names"]][(dms[["meta"]][["analyses"]][,pop_var] %in% paste(genetic_group[i]))]
+    if(length(samples)>=2){ #only for groups with >2 individuals
+      dmsx <- remove.by.list(dms, samples) 
+      bad_loci <- find.loci.missing.gte.value(dmsx, value=missingness, return_as_names = FALSE) #get loci that fail missingness threshold
+      out_list[[i]] <- bad_loci[[1]] # put them in a vector
+    }
+  }
+  bad_indices <- Reduce(intersect, out_list) # get indices that are duplicated i.e. fail the threshold for every group
+  dms_filtered <- remove.snps.from.dart.data(dms, bad_indices, input_as_names = FALSE)
+  print(paste("dms had", length(dms$locus_names), "loci, now it has", length(dms_filtered$locus_names), "loci"))
+  
+  return(dms_filtered)
+}
