@@ -1262,3 +1262,45 @@ remove_missing_loci_by_pop <- function(dms, pop_var, missingness){
   
   return(dms_filtered)
 }
+
+
+remove.sample.by.pop.missingness <-function(dms, pop_var, loci_missingness, sample_missingness){
+  # remove samples with missingness higher than the specified value in all populations provided 
+  # pop var is found in dms$meta$analyses 
+  # loci_missingness is the upper limit of acceptable missingness per locus e.g. 0.3 = all loci with more than 30% NA are removed
+  # sample_missingness is the upper limit of acceptable missingness for a sample e.g. 0.3 = all samples with more than 30% NA loci are removed
+  
+  # example: dms <- remove.sample.by.pop.missingness(dms2, "genetic_group2", loci_missingness = 0.3, sample_missingness = 0.3)
+
+  out_list <- c() #store the good samples
+  genetic_group <- unique(dms[["meta"]][["analyses"]][,pop_var]) # get genetic groups
+  
+  if(length(genetic_group)<=1){
+    stop("ERROR: <=1 population found in pop_var, use a different method")
+  }
+  
+  for(i in 1:length(genetic_group)){
+    # get the samples in the genetic group
+    samples <- dms[["sample_names"]][(dms[["meta"]][["analyses"]][,pop_var] %in% paste(genetic_group[i]))]
+    
+    if(length(samples)>=2){ #only for groups with >2 individuals
+      # make a dms for that genetic group
+      dmsx <- remove.by.list(dms, samples) 
+      # remove high missingness samples
+      dmsx <- remove.poor.quality.snps(dmsx, min_repro=0.96, max_missing=loci_missingness)
+      # get missingness per sample
+      na_per_row <- rowSums(is.na(dmsx[["gt"]]))/ncol(dmsx[["gt"]])
+      # get individuals with missingness less than sample_missingness
+      low_missing <- which(na_per_row <= sample_missingness)
+      hist(na_per_row, main=genetic_group[i])
+      print(paste("samples with low missingness:",length(low_missing), "for genetic group", genetic_group[i] ))
+      # add good samples to the list to keep
+      good_samples <- names(low_missing) 
+      out_list <- append(out_list, good_samples) # put them in a vector
+    }
+  }
+  dms_filtered <- remove.by.list(dms, out_list) # remove the bad samples from the final dms
+  print(paste("dms had", length(dms$sample_names), "samples, now it has", length(dms_filtered$sample_names), "sample"))
+  
+  return(dms_filtered)
+}
