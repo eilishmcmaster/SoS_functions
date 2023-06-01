@@ -997,14 +997,14 @@ species_site_stats <- function(dms, maf, pop_var, site_var){
     stop("ERROR: not enough samples to proceed (<=2)")
   }
   
-  # removes samples with only one sample per site
-  tab <- table(dms[["meta"]][["analyses"]][,pop_var], dms[["meta"]][["analyses"]][,site_var]) %>% as.data.table(.) 
-  if(1 %in% tab[,N]){
-    tab <- tab[N == 1, ]
-    not_small <- dms[["sample_names"]][which(!(dms[["meta"]][["analyses"]][,pop_var] %in% tab$V1 &
-                                                 dms[["meta"]][["analyses"]][,site_var] %in% tab$V2))]
-    dms <- remove.by.list(dms, not_small)
-  }
+  # # removes samples with only one sample per site
+  # tab <- table(dms[["meta"]][["analyses"]][,pop_var], dms[["meta"]][["analyses"]][,site_var]) %>% as.data.table(.) 
+  # if(1 %in% tab[,N]){
+  #   tab <- tab[N == 1, ]
+  #   not_small <- dms[["sample_names"]][which(!(dms[["meta"]][["analyses"]][,pop_var] %in% tab$V1 &
+  #                                                dms[["meta"]][["analyses"]][,site_var] %in% tab$V2))]
+  #   dms <- remove.by.list(dms, not_small)
+  # }
   
   # remove whitespaces
   dms[["meta"]][["analyses"]][,site_var] <- gsub("\\s", "_", dms[["meta"]][["analyses"]][,site_var])
