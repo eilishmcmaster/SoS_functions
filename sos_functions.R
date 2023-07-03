@@ -997,15 +997,6 @@ species_site_stats <- function(dms, maf, pop_var, site_var){
     stop("ERROR: not enough samples to proceed (<=2)")
   }
   
-  # # removes samples with only one sample per site
-  # tab <- table(dms[["meta"]][["analyses"]][,pop_var], dms[["meta"]][["analyses"]][,site_var]) %>% as.data.table(.) 
-  # if(1 %in% tab[,N]){
-  #   tab <- tab[N == 1, ]
-  #   not_small <- dms[["sample_names"]][which(!(dms[["meta"]][["analyses"]][,pop_var] %in% tab$V1 &
-  #                                                dms[["meta"]][["analyses"]][,site_var] %in% tab$V2))]
-  #   dms <- remove.by.list(dms, not_small)
-  # }
-  
   # remove whitespaces
   dms[["meta"]][["analyses"]][,site_var] <- gsub("\\s", "_", dms[["meta"]][["analyses"]][,site_var])
   dms[["meta"]][["analyses"]][,site_var] <- gsub(",", "", dms[["meta"]][["analyses"]][,site_var])
@@ -1021,6 +1012,17 @@ species_site_stats <- function(dms, maf, pop_var, site_var){
     dmsx <- remove.by.list(dms, dms[["sample_names"]][(dms[["meta"]][["analyses"]][,pop_var] %in% paste(genetic_group[i]))]) %>% 
       remove.poor.quality.snps(., min_repro=0.96,max_missing=0.3) %>%
       remove.by.maf(., maf)
+    
+    # removes samples with only one sample per site
+    tab <- table(dmsx[["meta"]][["analyses"]][,pop_var], dmsx[["meta"]][["analyses"]][,site_var]) %>% as.data.table(.)
+    if(1 %in% tab[,N]){
+      tab <- tab[N == 1, ]
+      print(paste("removing", tab," because n=1" ))
+      not_small <- dmsx[["sample_names"]][which(!(dmsx[["meta"]][["analyses"]][,pop_var] %in% tab$V1 &
+                                                    dmsx[["meta"]][["analyses"]][,site_var] %in% tab$V2))]
+      dmsx <- remove.by.list(dmsx, not_small)
+    }
+    
     sites <- dmsx[["meta"]][["analyses"]][,site_var]
     print((unique(sites)))
     
@@ -1058,7 +1060,6 @@ species_site_stats <- function(dms, maf, pop_var, site_var){
     print("WARNING: no data created")
   }
 }
-
 matcher2 <- function(df2, loci){
   df <- df2[-1]
   out <- vector()
