@@ -817,53 +817,53 @@ single_site_genepop_basicstats <- function(dms, min, group){
   ds <- ds[,which(keepers>=min)]
   cat(paste(ncol(ds))," loci are being used\n")
   
-  if (ncol(ds) >=50){
-    # make into genepop format
-    old <- c("0","1","2", NA)
-    new <- c("0101","0102","0202","0000")
-    ds[ds %in% old] <- new[match(ds, old, nomatch = 0000)]
-    
-    # write genepop file
-    gf <- paste0(species, "/popgen/genepop_",group,".gen")
-    
-    cat(paste0("genepop file: ",species, " with MAF ", paste0(min)),
-        file=gf,sep="\n")
-    cat(colnames(ds),file=gf,sep="\n", append=TRUE)
-    cat("pop",file=gf,sep="\n", append=TRUE)
-    for (i in 1:nrow(ds)){
-      cat(c("pop1,", ds[i,], "\n"),file=gf,sep="\t", append=TRUE)
-    }
-    cat("pop",file=gf,sep="\n", append=TRUE)
-    for (i in 1:2){
-      cat(c("pop2,", ds[i,], "\n"),file=gf,sep="\t", append=TRUE)
-    }
-    
-    # do basic stats
-    bs <- diveRsity::basicStats(infile = gf, outfile = NULL,
-                                fis_ci = FALSE, ar_ci = TRUE, 
-                                ar_boots = 1000, 
-                                rarefaction = FALSE, ar_alpha = 0.05)
-    # return(bs)
-    # extract the stats
-    npop <- 1
-    result <- as.data.frame(mat.or.vec(npop,11))
-    measurement_names <- rownames(bs$main_tab[[1]])
-    population_names  <- names(bs$main_tab) #ls() rearranges the names
-    rownames(result) <- {{group}}
-    colnames(result) <- measurement_names
-    
-    for (r in 1:npop) {
-      popstats <- bs$main_tab[[r]][,"overall"] ##extract from a list
-      result[r,] <- popstats}
-    
-    result$loci <- ncol(ds)
-    
-    return(result)
-  } else{
-    print(paste("WARNING: not enough loci for", group))
-    return(NULL)
+  # if (ncol(ds) >=50){
+  # make into genepop format
+  old <- c("0","1","2", NA)
+  new <- c("0101","0102","0202","0000")
+  ds[ds %in% old] <- new[match(ds, old, nomatch = 0000)]
+  
+  # write genepop file
+  gf <- paste0(species, "/popgen/genepop_",group,".gen")
+  
+  cat(paste0("genepop file: ",species, " with MAF ", paste0(min)),
+      file=gf,sep="\n")
+  cat(colnames(ds),file=gf,sep="\n", append=TRUE)
+  cat("pop",file=gf,sep="\n", append=TRUE)
+  for (i in 1:nrow(ds)){
+    cat(c("pop1,", ds[i,], "\n"),file=gf,sep="\t", append=TRUE)
   }
-}
+  cat("pop",file=gf,sep="\n", append=TRUE)
+  for (i in 1:2){
+    cat(c("pop2,", ds[i,], "\n"),file=gf,sep="\t", append=TRUE)
+  }
+  
+  # do basic stats
+  bs <- diveRsity::basicStats(infile = gf, outfile = NULL,
+                              fis_ci = FALSE, ar_ci = TRUE, 
+                              ar_boots = 1000, 
+                              rarefaction = FALSE, ar_alpha = 0.05)
+  # return(bs)
+  # extract the stats
+  npop <- 1
+  result <- as.data.frame(mat.or.vec(npop,11))
+  measurement_names <- rownames(bs$main_tab[[1]])
+  population_names  <- names(bs$main_tab) #ls() rearranges the names
+  rownames(result) <- {{group}}
+  colnames(result) <- measurement_names
+  
+  for (r in 1:npop) {
+    popstats <- bs$main_tab[[r]][,"overall"] ##extract from a list
+    result[r,] <- popstats}
+  
+  result$loci <- ncol(ds)
+  
+  return(result)
+  # } else{
+  #   print(paste("WARNING: not enough loci for", group))
+  #   return(NULL)
+  # }
+} 
 
 multi_site_genepop_basicstats <- function(dms, min, group, grouping){
   # This function makes the genepop file for a dms with multiple groups with low differentiation (eg one species from multiple sites).
@@ -878,63 +878,62 @@ multi_site_genepop_basicstats <- function(dms, min, group, grouping){
   ds <- ds[,which(keepers>=min)] # filter it by the MAF and min MAF specified
   cat(paste(ncol(ds))," loci are being used\n") # print the final ammount of loci being used
   
-  if(ncol(ds) >=50){# make into genepop format
-    old <- c("0","1","2", NA) 
-    new <- c("0101","0102","0202","0000")
-    ds[ds %in% old] <- new[match(ds, old, nomatch = 0000)] 
-    
-    # populations
-    pops <- unique(grouping) # get population names
-    
-    # write genepop file
-    gf <- paste0(species, "/popgen/genepop_",group,".gen") # make genepop file path
-    
-    cat(paste0("genepop file: ",species, " with MAF ", paste0(min)), # first line of genepop file
-        file=gf,sep="\n")
-    cat(colnames(ds),file=gf,sep="\n", append=TRUE) # one loci name per line
-    
-    remove <- c() # vector for populations excluded from the analysis 
-    
-    for (i in 1:length(pops)){ #loop for making the population groups
-      if (length(which(grouping %in% pops[i]))<=1){ # find if the population is n=1
-        cat("Removing population ", pops[i], " due to n=1")
-        remove <- c(remove, pops[i]) # add the pop name to remove vector
-      }else{
-        cat("pop",file=gf,sep="\n", append=TRUE) # add the data to the genepop file
-        df <- ds[which(grouping %in% pops[i]),]
-        for (j in 1:nrow(df)){
-          cat(c(paste0(pops[i],","),df[j,], "\n"),file=gf,sep="\t", append=TRUE)
-        }
+  # if(ncol(ds) >=50){# make into genepop format
+  old <- c("0","1","2", NA) 
+  new <- c("0101","0102","0202","0000")
+  ds[ds %in% old] <- new[match(ds, old, nomatch = 0000)] 
+  
+  # populations
+  pops <- unique(grouping) # get population names
+  
+  # write genepop file
+  gf <- paste0(species, "/popgen/genepop_",group,".gen") # make genepop file path
+  
+  cat(paste0("genepop file: ",species, " with MAF ", paste0(min)), # first line of genepop file
+      file=gf,sep="\n")
+  cat(colnames(ds),file=gf,sep="\n", append=TRUE) # one loci name per line
+  
+  remove <- c() # vector for populations excluded from the analysis 
+  
+  for (i in 1:length(pops)){ #loop for making the population groups
+    if (length(which(grouping %in% pops[i]))<=1){ # find if the population is n=1
+      cat("Removing population ", pops[i], " due to n=1")
+      remove <- c(remove, pops[i]) # add the pop name to remove vector
+    }else{
+      cat("pop",file=gf,sep="\n", append=TRUE) # add the data to the genepop file
+      df <- ds[which(grouping %in% pops[i]),]
+      for (j in 1:nrow(df)){
+        cat(c(paste0(pops[i],","),df[j,], "\n"),file=gf,sep="\t", append=TRUE)
       }
-      
-    } #end of pops loop
+    }
     
-    # # do basic stats
-    bs <- diveRsity::basicStats(infile = gf, outfile = NULL,
-                                fis_ci = FALSE, ar_ci = TRUE,
-                                ar_boots = 1000,
-                                rarefaction = FALSE, ar_alpha = 0.05)
-    # return(bs)
-    # extract the stats
-    npop <- length(pops)-length(remove)
-    result <- as.data.frame(mat.or.vec(npop,11))
-    measurement_names <- rownames(bs$main_tab[[1]])
-    population_names  <- names(bs$main_tab) #ls() rearranges the names
-    rownames(result) <- pops[!pops %in% remove]
-    colnames(result) <- measurement_names
-    
-    for (r in 1:npop) {
-      popstats <- bs$main_tab[[r]][,"overall"] ##extract from a list
-      result[r,] <- popstats}
-    result$loci <- ncol(ds)
-    return(result)
-  }else{
-    print(paste("WARNING: not enough loci for", group))
-    return(NULL)
-  }
+  } #end of pops loop
+  
+  # # do basic stats
+  bs <- diveRsity::basicStats(infile = gf, outfile = NULL,
+                              fis_ci = FALSE, ar_ci = TRUE,
+                              ar_boots = 1000,
+                              rarefaction = FALSE, ar_alpha = 0.05)
+  # return(bs)
+  # extract the stats
+  npop <- length(pops)-length(remove)
+  result <- as.data.frame(mat.or.vec(npop,11))
+  measurement_names <- rownames(bs$main_tab[[1]])
+  population_names  <- names(bs$main_tab) #ls() rearranges the names
+  rownames(result) <- pops[!pops %in% remove]
+  colnames(result) <- measurement_names
+  
+  for (r in 1:npop) {
+    popstats <- bs$main_tab[[r]][,"overall"] ##extract from a list
+    result[r,] <- popstats}
+  result$loci <- ncol(ds)
+  return(result)
+  # }else{
+  #   print(paste("WARNING: not enough loci for", group))
+  #   return(NULL)
+  # }
   
 }
-
 multispecies_stats <- function(dms, maf, var){ # calculates whole species stats for a dms where species =sp
   species <- unique(var)
   print(species)
