@@ -945,6 +945,8 @@ multispecies_stats <- function(dms, maf, var){ # calculates whole species stats 
       remove.by.maf(., maf)
     
     out <- single_site_genepop_basicstats(dmsx, maf, paste(species[i]))
+    out$n <- length(dmsx$sample_names)
+    
     out_list[[i]] <- out
   }
   out_df <- do.call(rbind, out_list)
