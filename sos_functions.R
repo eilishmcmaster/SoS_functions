@@ -817,53 +817,54 @@ single_site_genepop_basicstats <- function(dms, min, group){
   ds <- ds[,which(keepers>=min)]
   cat(paste(ncol(ds))," loci are being used\n")
   
-  # if (ncol(ds) >=50){
-  # make into genepop format
-  old <- c("0","1","2", NA)
-  new <- c("0101","0102","0202","0000")
-  ds[ds %in% old] <- new[match(ds, old, nomatch = 0000)]
-  
-  # write genepop file
-  gf <- paste0(species, "/popgen/genepop_",group,".gen")
-  
-  cat(paste0("genepop file: ",species, " with MAF ", paste0(min)),
-      file=gf,sep="\n")
-  cat(colnames(ds),file=gf,sep="\n", append=TRUE)
-  cat("pop",file=gf,sep="\n", append=TRUE)
-  for (i in 1:nrow(ds)){
-    cat(c("pop1,", ds[i,], "\n"),file=gf,sep="\t", append=TRUE)
+  if (ncol(ds) >=10){
+    # make into genepop format
+    old <- c("0","1","2", NA)
+    new <- c("0101","0102","0202","0000")
+    ds[ds %in% old] <- new[match(ds, old, nomatch = 0000)]
+    
+    # write genepop file
+    gf <- paste0(species, "/popgen/genepop_",group,".gen")
+    
+    cat(paste0("genepop file: ",species, " with MAF ", paste0(min)),
+        file=gf,sep="\n")
+    cat(colnames(ds),file=gf,sep="\n", append=TRUE)
+    cat("pop",file=gf,sep="\n", append=TRUE)
+    for (i in 1:nrow(ds)){
+      cat(c("pop1,", ds[i,], "\n"),file=gf,sep="\t", append=TRUE)
+    }
+    cat("pop",file=gf,sep="\n", append=TRUE)
+    for (i in 1:2){
+      cat(c("pop2,", ds[i,], "\n"),file=gf,sep="\t", append=TRUE)
+    }
+    
+    # do basic stats
+    bs <- diveRsity::basicStats(infile = gf, outfile = NULL,
+                                fis_ci = FALSE, ar_ci = TRUE, 
+                                ar_boots = 1000, 
+                                rarefaction = FALSE, ar_alpha = 0.05)
+    # return(bs)
+    # extract the stats
+    npop <- 1
+    result <- as.data.frame(mat.or.vec(npop,11))
+    measurement_names <- rownames(bs$main_tab[[1]])
+    population_names  <- names(bs$main_tab) #ls() rearranges the names
+    rownames(result) <- {{group}}
+    colnames(result) <- measurement_names
+    
+    for (r in 1:npop) {
+      popstats <- bs$main_tab[[r]][,"overall"] ##extract from a list
+      result[r,] <- popstats}
+    
+    result$loci <- ncol(ds)
+    
+    return(result)
+  } else{
+    print(paste("WARNING: not enough loci for", group))
+    return(NULL)
+    
   }
-  cat("pop",file=gf,sep="\n", append=TRUE)
-  for (i in 1:2){
-    cat(c("pop2,", ds[i,], "\n"),file=gf,sep="\t", append=TRUE)
-  }
-  
-  # do basic stats
-  bs <- diveRsity::basicStats(infile = gf, outfile = NULL,
-                              fis_ci = FALSE, ar_ci = TRUE, 
-                              ar_boots = 1000, 
-                              rarefaction = FALSE, ar_alpha = 0.05)
-  # return(bs)
-  # extract the stats
-  npop <- 1
-  result <- as.data.frame(mat.or.vec(npop,11))
-  measurement_names <- rownames(bs$main_tab[[1]])
-  population_names  <- names(bs$main_tab) #ls() rearranges the names
-  rownames(result) <- {{group}}
-  colnames(result) <- measurement_names
-  
-  for (r in 1:npop) {
-    popstats <- bs$main_tab[[r]][,"overall"] ##extract from a list
-    result[r,] <- popstats}
-  
-  result$loci <- ncol(ds)
-  
-  return(result)
-  # } else{
-  #   print(paste("WARNING: not enough loci for", group))
-  #   return(NULL)
-  # }
-} 
+}
 
 multi_site_genepop_basicstats <- function(dms, min, group, grouping){
   # This function makes the genepop file for a dms with multiple groups with low differentiation (eg one species from multiple sites).
@@ -934,8 +935,9 @@ multi_site_genepop_basicstats <- function(dms, min, group, grouping){
   # }
   
 }
-multispecies_stats <- function(dms, maf, var){ # calculates whole species stats for a dms where species =sp
+multispecies_stats <- function(dms, maf, var, remove_monomorphic=NULL){ # calculates whole species stats for a dms where species =sp
   species <- unique(var)
+  species <- species[!is.na(species)]
   print(species)
   out_list <- list()
   
@@ -943,6 +945,11 @@ multispecies_stats <- function(dms, maf, var){ # calculates whole species stats 
     dmsx <- remove.by.list(dms, dms$sample_names[(var %in% paste(species[i]))]) %>% 
       remove.poor.quality.snps(., min_repro=0.96,max_missing=0.3) %>%
       remove.by.maf(., maf)
+    
+    if(isTRUE(remove_monomorphic)){
+      dmsx <- remove.fixed.snps(dmsx) 
+      print("Fixed SNPs removed")
+    }
     
     out <- single_site_genepop_basicstats(dmsx, maf, paste(species[i]))
     out$n <- length(dmsx$sample_names)
@@ -954,7 +961,7 @@ multispecies_stats <- function(dms, maf, var){ # calculates whole species stats 
 }
 
 
-species_site_stats <- function(dms, maf, pop_var, site_var){ 
+species_site_stats <-function(dms, maf, pop_var, site_var, remove_monomorphic=NULL){ 
   # This function allows you to calculate site stats for multiple genetic groups at the same time
   # dms has all of the samples youre interested in 
   # MAF is the threshold (0.05 usually)
@@ -1024,6 +1031,11 @@ species_site_stats <- function(dms, maf, pop_var, site_var){
       dmsx <- remove.by.list(dmsx, not_small)
     }
     
+    if(isTRUE(remove_monomorphic)){
+      dmsx <- remove.fixed.snps(dmsx) 
+      print("Fixed SNPs removed")
+    }
+    
     sites <- dmsx[["meta"]][["analyses"]][,site_var]
     print((unique(sites)))
     
@@ -1061,6 +1073,8 @@ species_site_stats <- function(dms, maf, pop_var, site_var){
     print("WARNING: no data created")
   }
 }
+
+
 matcher2 <- function(df2, loci){
   df <- df2[-1]
   out <- vector()
