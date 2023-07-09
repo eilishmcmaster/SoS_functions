@@ -27,45 +27,54 @@ custom.read <- function(species, dataset){
 
 
 #used to remove samples with high missingness
-dart.remove.samples <- function(dms, missingness){
+dart.remove.samples <-function(dms_o, missingness){
+  dms <- dms_o
   na_per_row <- rowSums(is.na(dms[["gt"]]))/ncol(dms[["gt"]])
   high_missing <- which(na_per_row > missingness)
-  sample_names <- names(high_missing)
-  names(high_missing) <- NULL
   
-  dms$gt <- dms$gt[-high_missing, ]
-  dms$sample_names <- dms$sample_names[-high_missing]
+  if(length(high_missing)==0){
+    print("There are no high missing samples")
+    return(dms_o)
+  } else{
+    sample_names <- names(high_missing)
+    names(high_missing) <- NULL
+    
+    dms$gt <- dms$gt[-high_missing, ]
+    dms$sample_names <- dms$sample_names[-high_missing]
+    
+    if("site" %in% names(dms$meta)){
+      dms$meta$site <- dms$meta$site[-high_missing]}
+    
+    if("lat" %in% names(dms$meta)){
+      dms$meta$lat <- dms$meta$lat[-high_missing]}
+    
+    if("long" %in% names(dms$meta)){
+      dms$meta$long <- dms$meta$long[-high_missing]}
+    
+    if("sample_names" %in% names(dms$meta)){
+      dms$meta$sample_names <- dms$meta$sample_names[-high_missing]}
+    
+    if("analyses" %in% names(dms$meta)){
+      dms$meta$analyses <- dms$meta$analyses[-high_missing,]}
+    return(dms)
+    
+    if(isFALSE(unique(sample_names %in% rownames(dms$gt)))){
+      print("Samples have been successfully removed from dms$gt")}
+    else{stop("Huston, we have a problem (with dms$gt)")}
+    
+    if(isFALSE(unique(sample_names %in% dms$sample_names))){
+      print("Samples have been successfully removed from dms$sample_names")  }
+    else{stop("Huston, we have a problem (with dms$sample_names)")}
+    
+    if(isTRUE(identical(rownames(dms[["gt"]]), dms$sample_names))){
+      print("Samples are in order")}
+    else(stop("Huston, we have a problem (these eggs scrambled)"))
+    
+    paste(length(high_missing), "samples have been removed due missingness >", missingness)
+    
+    return(dms)
+  }
   
-  if("site" %in% names(dms$meta)){
-    dms$meta$site <- dms$meta$site[-high_missing]}
-  
-  if("lat" %in% names(dms$meta)){
-    dms$meta$lat <- dms$meta$lat[-high_missing]}
-  
-  if("long" %in% names(dms$meta)){
-    dms$meta$long <- dms$meta$long[-high_missing]}
-  
-  if("sample_names" %in% names(dms$meta)){
-    dms$meta$sample_names <- dms$meta$sample_names[-high_missing]}
-  
-  if("analyses" %in% names(dms$meta)){
-    dms$meta$analyses <- dms$meta$analyses[-high_missing,]}
-  
-  if(unique(sample_names %in% rownames(dms$gt))==FALSE){
-    print("Samples have been successfully removed from dms$gt")}
-  else{stop("Huston, we have a problem (with dms$gt)")}
-  
-  if(unique(sample_names %in% dms$sample_names)==FALSE){
-    print("Samples have been successfully removed from dms$sample_names")  }
-  else{stop("Huston, we have a problem (with dms$sample_names)")}
-  
-  if(identical(rownames(dms[["gt"]]), dms$sample_names)==TRUE){
-    print("Samples are in order")}
-  else(stop("Huston, we have a problem (these eggs scrambled)"))
-  
-  paste(length(high_missing), "samples have been removed due missingness >", missingness)
-  
-  return(dms)
 }
 
 remove.by.meta <- function(dms, meta){
