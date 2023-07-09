@@ -27,7 +27,7 @@ custom.read <- function(species, dataset){
 
 
 #used to remove samples with high missingness
-dart.remove.samples <-function(dms_o, missingness){
+remove.by.missingness <-function(dms_o, missingness){
   dms <- dms_o
   na_per_row <- rowSums(is.na(dms[["gt"]]))/ncol(dms[["gt"]])
   high_missing <- which(na_per_row > missingness)
@@ -74,8 +74,9 @@ dart.remove.samples <-function(dms_o, missingness){
     
     return(dms)
   }
-  
 }
+
+dart.remove.samples <- remove.by.missingness
 
 remove.by.meta <- function(dms, meta){
   missing <- which(!(rownames(dms$gt) %in% meta$sample))
