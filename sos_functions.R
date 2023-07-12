@@ -1330,3 +1330,20 @@ remove.sample.by.pop.missingness <-function(dms, pop_var, loci_missingness, samp
   
   return(dms_filtered)
 }
+
+remove.loci.randomly <- function(dms, number_to_keep){
+  # remove loci randomly 
+  num_to_remove <- length(dms$locus_names)-number_to_keep
+  if(num_to_remove<=0){
+    print("Not enough loci to remove")
+    stop()
+  }
+  
+  loci_to_remove <- sample(1:length(dms$locus_names), num_to_remove, replace = FALSE) #get loci randomly to remove
+  
+  dms_filtered <- remove.snps.from.dart.data(dms, loci_to_remove, input_as_names = FALSE)
+  
+  print(paste("dms had", length(dms$locus_names), "loci, now it has", length(dms_filtered$locus_names), "loci"))
+  
+  return(dms_filtered)
+}
