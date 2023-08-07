@@ -945,15 +945,21 @@ multi_site_genepop_basicstats <- function(dms, min, group, grouping){
   # }
   
 }
-multispecies_stats <- function(dms, maf, var, remove_monomorphic=NULL){ # calculates whole species stats for a dms where species =sp
+
+
+multispecies_stats <- function(dms, maf, var, missing= NULL, remove_monomorphic=NULL){ # calculates whole species stats for a dms where species =sp
   species <- unique(var)
   species <- species[!is.na(species)]
   print(species)
   out_list <- list()
   
+  if(is.null(missing)){
+    missing <- 0.3
+  }
+  
   for(i in 1:length(species)){
     dmsx <- remove.by.list(dms, dms$sample_names[(var %in% paste(species[i]))]) %>% 
-      remove.poor.quality.snps(., min_repro=0.96,max_missing=0.3) %>%
+      remove.poor.quality.snps(., min_repro=0.96,max_missing=missing) %>%
       remove.by.maf(., maf)
     
     if(isTRUE(remove_monomorphic)){
@@ -970,8 +976,7 @@ multispecies_stats <- function(dms, maf, var, remove_monomorphic=NULL){ # calcul
   return(out_df)
 }
 
-
-species_site_stats <-function(dms, maf, pop_var, site_var, remove_monomorphic=NULL){ 
+species_site_stats <-function(dms, maf, pop_var, site_var, missing=NULL, remove_monomorphic=NULL){ 
   # This function allows you to calculate site stats for multiple genetic groups at the same time
   # dms has all of the samples youre interested in 
   # MAF is the threshold (0.05 usually)
@@ -1026,9 +1031,13 @@ species_site_stats <-function(dms, maf, pop_var, site_var, remove_monomorphic=NU
   out_list <- list()
   genetic_group <- unique(dms[["meta"]][["analyses"]][,pop_var])
   
+  if(is.null(missing)){
+    missing <- 0.3
+  }
+  
   for(i in 1:length(genetic_group)){
     dmsx <- remove.by.list(dms, dms[["sample_names"]][(dms[["meta"]][["analyses"]][,pop_var] %in% paste(genetic_group[i]))]) %>% 
-      remove.poor.quality.snps(., min_repro=0.96,max_missing=0.3) %>%
+      remove.poor.quality.snps(., min_repro=0.96,max_missing=missing) %>%
       remove.by.maf(., maf)
     
     # removes samples with only one sample per site
