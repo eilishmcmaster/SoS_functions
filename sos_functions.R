@@ -1010,7 +1010,7 @@ species_site_stats <- function(dms, maf, pop_var, site_var, missing=NULL, remove
     stop("ERROR: pop_var is empty")
   }
   
-  removes samples with no site or sp classification
+  # removes samples with no site or sp classification
   samples_with_sp_and_site <- dms[["sample_names"]][-which(is.na(dms[["meta"]][["analyses"]][,site_var]) |
                                                              is.na(dms[["meta"]][["analyses"]][,pop_var]))]
   if(length(samples_with_sp_and_site)>=2){
