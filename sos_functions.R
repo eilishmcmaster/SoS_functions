@@ -976,7 +976,7 @@ multispecies_stats <- function(dms, maf, var, missing= NULL, remove_monomorphic=
   return(out_df)
 }
 
-species_site_stats <-function(dms, maf, pop_var, site_var, missing=NULL, remove_monomorphic=NULL){ 
+species_site_stats <- function(dms, maf, pop_var, site_var, missing=NULL, remove_monomorphic=NULL){ 
   # This function allows you to calculate site stats for multiple genetic groups at the same time
   # dms has all of the samples youre interested in 
   # MAF is the threshold (0.05 usually)
@@ -1010,7 +1010,7 @@ species_site_stats <-function(dms, maf, pop_var, site_var, missing=NULL, remove_
     stop("ERROR: pop_var is empty")
   }
   
-  # removes samples with no site or sp classification
+  removes samples with no site or sp classification
   samples_with_sp_and_site <- dms[["sample_names"]][-which(is.na(dms[["meta"]][["analyses"]][,site_var]) |
                                                              is.na(dms[["meta"]][["analyses"]][,pop_var]))]
   if(length(samples_with_sp_and_site)>=2){
@@ -1039,6 +1039,9 @@ species_site_stats <-function(dms, maf, pop_var, site_var, missing=NULL, remove_
     dmsx <- remove.by.list(dms, dms[["sample_names"]][(dms[["meta"]][["analyses"]][,pop_var] %in% paste(genetic_group[i]))]) %>% 
       remove.poor.quality.snps(., min_repro=0.96,max_missing=missing) %>%
       remove.by.maf(., maf)
+    print(paste("number of samples: ",length(dmsx$sample_names)))
+    print(paste("number of loci (after missingness filter): ",length(dmsx$locus_names)))
+    
     
     # removes samples with only one sample per site
     tab <- table(dmsx[["meta"]][["analyses"]][,pop_var], dmsx[["meta"]][["analyses"]][,site_var]) %>% as.data.table(.)
@@ -1059,7 +1062,7 @@ species_site_stats <-function(dms, maf, pop_var, site_var, missing=NULL, remove_
     print((unique(sites)))
     
     if(length(unique(sites))>=2){
-      out <- multi_site_genepop_basicstats(dmsx, maf, paste(genetic_group[i]), dmsx[["meta"]][["analyses"]][,site_var])
+      out <- multi_site_genepop_basicstats(dmsx, 0, paste(genetic_group[i]), dmsx[["meta"]][["analyses"]][,site_var])
       if(isFALSE(is.null(out))){
         freq <- table(dmsx[["meta"]][["analyses"]][,site_var]) %>% data.frame()
         colnames(freq)[2]<- "n"
@@ -1070,7 +1073,7 @@ species_site_stats <-function(dms, maf, pop_var, site_var, missing=NULL, remove_
       }
     }
     if(length(unique(sites))==1){
-      out <- single_site_genepop_basicstats(dmsx, maf, paste(unique(sites)))
+      out <- single_site_genepop_basicstats(dmsx, 0, paste(unique(sites)))
       if(isFALSE(is.null(out))){
         out$genetic_group <- paste(genetic_group[i])
         out$site <- rownames(out)
@@ -1092,7 +1095,6 @@ species_site_stats <-function(dms, maf, pop_var, site_var, missing=NULL, remove_
     print("WARNING: no data created")
   }
 }
-
 
 matcher2 <- function(df2, loci){
   df <- df2[-1]
