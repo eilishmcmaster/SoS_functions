@@ -1109,7 +1109,10 @@ matcher2 <- function(df2, loci){
 }
 
 
-venner <- function(dms, pops, min_af){
+make_allele_list <- function(dms, pops, min_af){
+  # this function makes a list of vectors where each vector contains the alleles in a specified population
+  # this data can then be used to calculate total alleles, private alleles, and make venn diagrams
+  
   groups <- unique({{pops}})
   out <- vector()
   
@@ -1133,8 +1136,40 @@ venner <- function(dms, pops, min_af){
   return(out)
 }
 
-
+venner <- make_allele_list
 # ploidy functions
+
+calculate_private_alleles <- function(populations) {
+  # takes the list of vectors produced by venner or make_allele_list 
+  # calculates total alleles and private alleles 
+  # produces the same results as gg_private_alleles <- poppr::private_alleles(genind_data, level="population", report="table", count.alleles=FALSE)
+  
+  result_table <- data.frame(population = character(0), private_allele_count = numeric(0), total_allele_count = numeric(0))
+  total_alleles <- unique(unlist(populations))
+  
+  for (i in 1:length(populations)) {
+    current_pop <- populations[[i]]
+    private_alleles <- unique(current_pop)
+    
+    for (j in 1:length(populations)) {
+      if (i != j) {
+        private_alleles <- setdiff(private_alleles, populations[[j]])
+      }
+    }
+    
+    total_allele_count <- length(current_pop)
+    private_allele_count <- length(private_alleles)
+    
+    result_table <- rbind(result_table, data.frame(population = names(populations)[i], 
+                                                   private_allele_count = private_allele_count, 
+                                                   total_allele_count = total_allele_count))
+  }
+  
+  result_table <- rbind(result_table, data.frame(population = "Total", private_allele_count = length(total_alleles),
+                                                 total_allele_count = length(total_alleles)))
+  
+  return(result_table)
+}
 
 
 count_subsetter <- function(dms, count, min){
@@ -1358,3 +1393,5 @@ remove.loci.randomly <- function(dms, number_to_keep){
   
   return(dms_filtered)
 }
+
+
