@@ -1,3 +1,60 @@
+
+read.meta.data.full.analyses.df <- function (dart_data, basedir, species, dataset, 
+                                nas = "-") 
+{ #this function keeps lat, long, site, annd samples in the dms$meta$analyses df
+  metafile <- paste(basedir, species, "/meta/", species, "_", 
+                    dataset, "_meta.xlsx", sep = "")
+  if (file.exists(metafile)) {
+    cat("\n")
+    cat(" Reading data file:", metafile, "\n")
+  }
+  else {
+    cat(" Fatal Error: the metadata file", metafile, "does not exist \n")
+    stop()
+  }
+  m <- read.xlsx(metafile, sheet = 1, colNames = TRUE)
+  if (any(names(m) == "sample") & any(names(m) == "lat") & 
+      any(names(m) == "long")) {
+    cat(" Found sample, lat and long columns in metadata \n")
+  }
+  else {
+    cat(" Fatal Error: did not find important sample, lat or long column in metadata \n")
+    stop()
+  }
+  dart_samples <- dart_data$sample_names
+  mm <- match(dart_samples, m$sample)
+  mi <- intersect(m$sample, dart_samples)
+  mm_real <- which(m$sample %in% mi)
+  num_dart_samples <- nrow(dart_data$gt)
+  num_meta_samples <- nrow(m)
+  num_match_samples <- length(mm_real)
+  if (num_match_samples > 1) {
+    cat(" Found metadata for ", num_meta_samples, " samples \n")
+    cat(" This includes overlap with ", num_match_samples, 
+        " samples \n")
+    cat(" out of ", num_dart_samples, "in DArT genotypes \n")
+  }
+  else {
+    cat(" Fatal Error: no matching sample information between meta-data and DArT genotypes \n")
+    stop()
+  }
+  missing_in_meta <- rownames(dart_data$gt)[is.na(m$sample[mm])]
+  meta_ordered <- m[mm_real, ]
+  sample_names <- as.character(meta_ordered$sample)
+  site <- as.character(meta_ordered$site)
+  lat <- as.numeric(meta_ordered$lat)
+  long <- as.numeric(meta_ordered$long)
+  
+  cat(" Adding analysis fields to meta data list \n")
+  an <- meta_ordered[, 1:(ncol(meta_ordered))] 
+  # an <- an[, -which(names(an) %in% c("sample", "site", "lat", "long"))]
+  analyses <- as.matrix(an)
+  
+  meta_data <- list(sample_names = sample_names, site = site, 
+                    lat = lat, long = long, analyses = analyses)
+  return(meta_data)
+}
+
 read.meta.data.new <- function (dart_data, basedir, species, dataset, 
                                 nas = "-") 
 {
