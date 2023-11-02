@@ -1,5 +1,5 @@
 read.meta.data.new <- function (dart_data, basedir, species, dataset, 
-                             nas = "-") 
+                                nas = "-") 
 {
   metafile <- paste(basedir, species, "/meta/", species, "_", 
                     dataset, "_meta.xlsx", sep = "")
@@ -11,7 +11,7 @@ read.meta.data.new <- function (dart_data, basedir, species, dataset,
     cat(" Fatal Error: the metadata file", metafile, "does not exist \n")
     stop()
   }
-  m <- read_excel(metafile, sheet = 1, col_names = TRUE, na = nas)
+  m <- read.xlsx(metafile, sheet = 1, colNames = TRUE)
   if (any(names(m) == "sample") & any(names(m) == "lat") & 
       any(names(m) == "long")) {
     cat(" Found sample, lat and long columns in metadata \n")
@@ -20,8 +20,9 @@ read.meta.data.new <- function (dart_data, basedir, species, dataset,
     cat(" Fatal Error: did not find important sample, lat or long column in metadata \n")
     stop()
   }
-  mm <- match(rownames(dart_data$gt), m$sample)
-  mi <- intersect(m$sample, rownames(dart_data$gt))
+  dart_samples <- dart_data$sample_names
+  mm <- match(dart_samples, m$sample)
+  mi <- intersect(m$sample, dart_samples)
   mm_real <- which(m$sample %in% mi)
   num_dart_samples <- nrow(dart_data$gt)
   num_meta_samples <- nrow(m)
