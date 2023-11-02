@@ -44,7 +44,7 @@ read.meta.data.new <- function (dart_data, basedir, species, dataset,
   long <- as.numeric(meta_ordered$long)
   
   cat(" Adding analysis fields to meta data list \n")
-  an <- meta_ordered[, 1:(ncol(meta_ordered))]
+  an <- meta_ordered[, 1:(ncol(meta_ordered))] %>% as.matrix()
   an <- an[,-c("sample","site","lat","long")]
   analyses <- as.matrix(an)
   
