@@ -1157,6 +1157,7 @@ species_site_stats <- function(dms, maf, pop_var, site_var, missing=NULL, remove
       remove.by.maf(., maf)
     print(paste("number of samples: ",length(dmsx$sample_names)))
     print(paste("number of loci (after missingness filter): ",length(dmsx$locus_names)))
+    if(length(dmsx$locus_names)<=50){next}
     
     
     # removes samples with only one sample per site
@@ -1211,6 +1212,7 @@ species_site_stats <- function(dms, maf, pop_var, site_var, missing=NULL, remove
     print("WARNING: no data created")
   }
 }
+
 
 matcher2 <- function(df2, loci){
   df <- df2[-1]
