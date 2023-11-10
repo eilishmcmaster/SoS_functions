@@ -1145,7 +1145,15 @@ species_site_stats <- function(dms, maf, pop_var, site_var, missing=NULL, remove
   
   
   out_list <- list()
+  # Count the occurrences of each value in pop_var
+  pop_var_counts <- table(dms[["meta"]][["analyses"]][, pop_var])
+  
+  # Identify values with more than one occurrence
+  values_to_keep <- names(pop_var_counts[pop_var_counts > 1])
   genetic_group <- unique(dms[["meta"]][["analyses"]][,pop_var])
+  
+  # Filter genetic_group based on values_to_keep
+  genetic_group <- genetic_group[genetic_group %in% values_to_keep]  
   
   if(is.null(missing)){
     missing <- 0.3
@@ -1212,6 +1220,7 @@ species_site_stats <- function(dms, maf, pop_var, site_var, missing=NULL, remove
     print("WARNING: no data created")
   }
 }
+
 
 
 matcher2 <- function(df2, loci){
