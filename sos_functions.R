@@ -1,6 +1,6 @@
 
 read.meta.data.full.analyses.df <- function (dart_data, basedir, species, dataset, 
-                                nas = "-") 
+                                             nas = "-") 
 { #this function keeps lat, long, site, annd samples in the dms$meta$analyses df
   metafile <- paste(basedir, species, "/meta/", species, "_", 
                     dataset, "_meta.xlsx", sep = "")
@@ -49,11 +49,13 @@ read.meta.data.full.analyses.df <- function (dart_data, basedir, species, datase
   an <- meta_ordered[, 1:(ncol(meta_ordered))] 
   # an <- an[, -which(names(an) %in% c("sample", "site", "lat", "long"))]
   analyses <- as.matrix(an)
+  analyses <- apply(analyses, c(1, 2), trimws)
   
   meta_data <- list(sample_names = sample_names, site = site, 
                     lat = lat, long = long, analyses = analyses)
   return(meta_data)
 }
+
 
 read.meta.data.new <- function (dart_data, basedir, species, dataset, 
                                 nas = "-") 
