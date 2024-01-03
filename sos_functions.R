@@ -1592,3 +1592,78 @@ write_structure_mainparams <- function(NUMINDS, NUMLOCI, filename) {
   # Write the parameters to a file
   writeLines(parameters, con = filename)
 }
+
+
+individual_kinship_by_pop_KING_robust <- function(dart_data, basedir, species, dataset, pop, maf=0.1, mis=0.2, as_bigmat=TRUE) {
+  require(SNPRelate)
+  popvec <- unique(pop)
+  kinlist <- list()
+  nsamp <- nrow(dart_data$gt)
+  igds_file <- dart2gds(dart_data, basedir, species, dataset)
+  igds <- snpgdsOpen(igds_file)
+  
+  for (i in 1:length(popvec)) {
+    ipop <- popvec[i]
+    isamps <- which(pop == ipop)
+    iout <- snpgdsIBDKING(igds, sample.id=rownames(dart_data$gt)[isamps] , family.id	=dart_data$meta$site,
+                          maf=maf, missing.rate=mis, num.thread=1)
+    ikout <- iout$kinship
+    rownames(ikout) <- rownames(dart_data$gt)[isamps]
+    colnames(ikout) <- rownames(dart_data$gt)[isamps]
+    kinlist[[ ipop ]] <- ikout
+    
+  }
+  
+  snpgdsClose(igds)
+  
+  if (as_bigmat) {
+    bigmat <- matrix( rep(0, nsamp*nsamp ), nrow=nsamp )
+    rownames(bigmat) <- rep("", nrow(bigmat))
+    colnames(bigmat) <- rep("", nrow(bigmat))
+    
+    istart <- 1
+    for (i in 1:length(kinlist)) {
+      
+      im <- kinlist[[i]]
+      iN <- nrow(im)
+      
+      if (istart == 1) {
+        istop = iN
+      } else {
+        istop = istop + iN
+      }
+      
+      cat(istart, istop, "\n")
+      bigmat[istart:istop, istart:istop] <- im
+      rownames(bigmat)[istart:istop] <- rownames(im)
+      colnames(bigmat)[istart:istop] <- rownames(im)
+      istart = istart + iN
+      
+    }
+    return(bigmat)
+  } else {
+    return(kinlist)
+  }
+}
+
+infering_function_kin_only <- function(df1, inference_parameters) {
+  df1$degree <- NA  # Initialize a new 'degree' column with NA values
+  
+  for (i in 1:nrow(df1)) {
+    kin_value <- df1$kin[i]
+    k0_value <- df1$k0[i]
+    
+    # Find the row in inference_parameters that matches the condition
+    match_row <- which(
+      kin_value >= inference_parameters$min_kin &
+        kin_value <= inference_parameters$max_kin
+    )
+    
+    # If a matching row is found, assign the corresponding degree value
+    if (length(match_row) > 0) {
+      df1$degree[i] <- inference_parameters$degree[match_row]
+    }
+  }
+  
+  return(df1)
+}
