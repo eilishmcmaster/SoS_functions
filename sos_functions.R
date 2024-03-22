@@ -1258,7 +1258,7 @@ make_allele_list <- function(dms, pops, min_af){
     df2 <- rbind("names"=colnames(df), df)
     alleles <- apply(df2, 2, matcher2, loci)
     names(alleles)<-NULL
-    listed <- unlist(alleles)
+    listed <- unlist(alleles) %>% as.vector()
     out <- c(out, list(listed))
     names(out)[i] <- groups[i]
   }
