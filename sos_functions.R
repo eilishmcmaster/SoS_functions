@@ -1709,3 +1709,51 @@ population.pw.Fst <- function (dart_data, population, basedir, species, dataset,
   flist <- list(Fst = Fst, Nloc = Nloc, Nind = Nind, pop_info = pop_info)
   return(flist)
 }
+
+
+dms_repeat_pop_maker <- function(dms, original_pop, additional_pops, new_column_name){
+  # make dataset with replicate samples for fire scenarios
+  meta <- dms$meta$analyses %>% as.data.frame()
+  meta[,new_column_name] <- meta[,original_pop]
+  dms$meta$analyses <- meta
+  dt <- dms
+  # remove NA samples in original population
+  dt <- remove.by.list(dt, dt$sample_names[!is.na(dt$meta$analyses[,original_pop])])
+  
+  for (population in additional_pops){
+    inds <- meta$sample[which(!is.na(meta[,population]))] 
+    
+    bigger_gt <- dms$gt[inds,]
+    rownames(bigger_gt) <- paste(inds, population, sep="_")
+    bigger_gt2 <- rbind(dt$gt, bigger_gt)
+    
+    bigger_sample_names <- rownames(bigger_gt2)
+    
+    bigger_meta <- dms$meta$analyses %>%
+      as.data.frame %>%
+      .[.$sample %in% inds,] %>%
+      .[match(.$sample, inds),]
+    bigger_meta$sample <- paste(bigger_meta$sample, population,sep="_")
+    bigger_meta[,new_column_name] <- bigger_meta[,population]
+    bigger_meta_2 <- rbind(as.data.frame(dt$meta$analyses), bigger_meta)
+    
+    bigger_sample_site <- bigger_meta_2$site
+    bigger_sample_lat <- bigger_meta_2$lat
+    bigger_sample_long <- bigger_meta_2$long
+    
+    identical(bigger_sample_names, bigger_meta_2$sample)
+    identical(rownames(bigger_gt2), bigger_meta_2$sample)
+    
+    dt_new <- dt
+    dt_new$gt <- bigger_gt2
+    dt_new$sample_names <- bigger_sample_names
+    dt_new$meta$sample_names <- bigger_sample_names
+    dt_new$meta$site <- bigger_sample_site
+    dt_new$meta$lat <- bigger_sample_lat %>% as.double()
+    dt_new$meta$long <- bigger_sample_long %>% as.double()
+    dt_new$meta$analyses <- bigger_meta_2 %>% as.matrix
+    dt <- dt_new
+  }
+  
+  return(dt_new)
+}
