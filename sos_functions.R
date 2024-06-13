@@ -744,7 +744,7 @@ common_allele_count <- function(gt, w=NULL, cthresh=1) {
   
   min_counts <- alt_counts #minor allele count is alt count 
   for ( i in 1:ncol(gt) ) {
-    if ( alt_counts[i] > ref_counts[i]) {
+    if ( isTRUE(alt_counts[i] > ref_counts[i])) {
       min_counts[i] <- ref_counts[i] #if ref allele count is less than alt count, alt is minor allele
     } 
     
