@@ -1238,32 +1238,47 @@ matcher2 <- function(df2, loci){
 }
 
 
-make_allele_list <- function(dms, pops, min_af){
-  # this function makes a list of vectors where each vector contains the alleles in a specified population
-  # this data can then be used to calculate total alleles, private alleles, and make venn diagrams
+make_allele_list <- function(dms, pops, min_af) {
+  # This function creates a list of vectors where each vector contains the alleles in a specified population
+  # This data can be used to calculate total alleles, private alleles, and create Venn diagrams
   
   groups <- unique({{pops}})
-  out <- vector()
+  out <- vector("list", length(groups))  # Initialize output as a list with the same length as groups
   
   ds <- dms$gt
   keepers <- get_minor_allele_frequencies(ds)
-  ds <- ds[,which(keepers>=min_af)]
+  ds <- ds[, which(keepers >= min_af)]
   cat("Found ", ncol(ds), " poly sites\n")     
-  loci <- data.frame("loci"=colnames(dms$gt),
-                     "allele1"=paste(dms$locus_names,substr(dms$locus_nuc, start=1, stop=1)),
-                     "allele2"=paste(dms$locus_names,substr(dms$locus_nuc, start=3, stop=3)))
-  for(i in 1:length(groups)){
-    df <- ds[{{pops}} %in% groups[i],] # gets the gt frame of just that group
+  
+  loci <- data.frame(
+    "loci" = colnames(dms$gt),
+    "allele1" = paste(dms$locus_names, substr(dms$locus_nuc, start = 1, stop = 1)),
+    "allele2" = paste(dms$locus_names, substr(dms$locus_nuc, start = 3, stop = 3))
+  )
+  
+  for (i in seq_along(groups)) {
+    # Subset the data frame and ensure it remains a data frame, even with one row
+    df <- ds[{{pops}} %in% groups[i], , drop = FALSE]
     cat("There are ", nrow(df), " samples in ", groups[i], "\n")
-    df2 <- rbind("names"=colnames(df), df)
+    
+    # Ensure df is treated as a data frame and add column names as the first row
+    df2 <- rbind("names" = colnames(df), as.data.frame(df))
+    
+    # Apply the matcher2 function
     alleles <- apply(df2, 2, matcher2, loci)
-    names(alleles)<-NULL
+    
+    # Remove names from the alleles
+    names(alleles) <- NULL
+    
+    # Convert the alleles list to a vector and store in the output list
     listed <- unlist(alleles) %>% as.vector()
-    out <- c(out, list(listed))
+    out[[i]] <- listed  # Store results in a list, correctly indexed
     names(out)[i] <- groups[i]
   }
+  
   return(out)
 }
+
 
 venner <- make_allele_list
 # ploidy functions
