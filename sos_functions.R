@@ -1228,7 +1228,7 @@ species_site_stats <- function(dms, maf, pop_var, site_var, missing=NULL, remove
 matcher2 <- function(df2, loci){
   df <- df2[-1]
   out <- vector()
-  if(0 %in% df | 2 %in% df){
+  if(0 %in% df | 1 %in% df){
     out <- append(out, loci[loci==df2[1],2])
   }
   if(1 %in% df | 2 %in% df){
