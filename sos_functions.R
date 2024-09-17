@@ -1772,3 +1772,47 @@ dms_repeat_pop_maker <- function(dms, original_pop, additional_pops, new_column_
   
   return(dt_new)
 }
+
+faster_allele_counts <- function(dms, pops, min_af) {
+  groups <- unique({{pops}})
+  out <- vector("list", length(groups))  # Initialize output as a list with the same length as groups
+  
+  ds <- dms$gt
+  keepers <- get_minor_allele_frequencies(ds)
+  ds <- ds[, which(keepers >= min_af)]
+  cat("Found ", ncol(ds), " poly sites\n")     
+  
+  ds_inverse <- 2 - ds
+  colnames(ds) <- paste(dms$locus_names, substr(dms$locus_nuc, 1, 1), sep="_")
+  colnames(ds_inverse) <- paste(dms$locus_names, substr(dms$locus_nuc, 3, 3), sep="_")
+  x <- cbind(ds, ds_inverse)
+  
+  x2 <- x %>% as.matrix()
+  x2[x2==2] <- 1
+  n <- c()
+  out <- list()
+  
+  for (i in seq_along(groups)) {
+    # ds[{{pops}} %in% groups[i], , drop = FALSE]
+    x3 <- x2[{{pops}} %in% groups[i], , drop = FALSE]
+    cat("There are ", nrow(x3), " samples in ", groups[i], "\n")
+    # x3 <- rbind("names" = colnames(x3), as.data.frame(x3))
+    
+    n <- c(n, nrow(x3))
+    allele_max <- colSums(x3, na.rm=TRUE) %>% as.vector()
+    allele_max[allele_max>=1] <- 1 # presence absence
+    out[[i]] <- as.vector(allele_max)
+    names(out)[i] <- groups[i]
+  }
+  
+  z <- do.call(rbind,out)
+  total_allele_count <- rowSums(z, na.rm=TRUE)
+  pa_loci <- which(colSums(z, na.rm=TRUE)==1)
+  private_allele_count <- rowSums(z[,pa_loci], na.rm=TRUE)
+  out_df <- cbind(private_allele_count, total_allele_count, n) %>% as.data.frame()
+  out_df$population <- rownames(out_df)
+  rownames(out_df) <- NULL
+  out_df <- rbind(out_df, c(ncol(x2), ncol(x2),sum(n), 'Total'))
+  out_df <- out_df[,c(4,1,2,3)]
+  return(out_df)
+}
