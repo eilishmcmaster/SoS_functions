@@ -1772,7 +1772,6 @@ dms_repeat_pop_maker <- function(dms, original_pop, additional_pops, new_column_
   
   return(dt_new)
 }
-
 faster_allele_counts <- function(dms, pops, min_af) {
   groups <- unique({{pops}})
   out <- vector("list", length(groups))  # Initialize output as a list with the same length as groups
@@ -1808,7 +1807,17 @@ faster_allele_counts <- function(dms, pops, min_af) {
   z <- do.call(rbind,out)
   total_allele_count <- rowSums(z, na.rm=TRUE)
   pa_loci <- which(colSums(z, na.rm=TRUE)==1)
-  private_allele_count <- rowSums(z[,pa_loci], na.rm=TRUE)
+  
+  if(length(pa_loci)>1){
+    private_allele_count <- rowSums(z[,pa_loci], na.rm=TRUE)
+  }
+  if(length(pa_loci)==1){
+    private_allele_count <- rep(0,nrow(z))
+    private_allele_count[which(z[,pa_loci]==1)] <- 1
+  }
+  if(length(pa_loci)==0){
+    private_allele_count <- rep(0,nrow(z))
+  }
   out_df <- cbind(private_allele_count, total_allele_count, n) %>% as.data.frame()
   out_df$population <- rownames(out_df)
   rownames(out_df) <- NULL
