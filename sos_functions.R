@@ -1772,6 +1772,7 @@ dms_repeat_pop_maker <- function(dms, original_pop, additional_pops, new_column_
   
   return(dt_new)
 }
+
 faster_allele_counts <- function(dms, pops, min_af) {
   groups <- unique({{pops}})
   out <- vector("list", length(groups))  # Initialize output as a list with the same length as groups
@@ -1782,8 +1783,8 @@ faster_allele_counts <- function(dms, pops, min_af) {
   cat("Found ", ncol(ds), " poly sites\n")     
   
   ds_inverse <- 2 - ds
-  colnames(ds) <- paste(dms$locus_names, substr(dms$locus_nuc, 1, 1), sep="_")
-  colnames(ds_inverse) <- paste(dms$locus_names, substr(dms$locus_nuc, 3, 3), sep="_")
+  colnames(ds) <- paste(dms$locus_names[which(keepers >= min_af)], substr(dms$locus_nuc[which(keepers >= min_af)], 1, 1), sep="_")
+  colnames(ds_inverse) <- paste(dms$locus_names[which(keepers >= min_af)], substr(dms$locus_nuc[which(keepers >= min_af)], 3, 3), sep="_")
   x <- cbind(ds, ds_inverse)
   
   x2 <- x %>% as.matrix()
